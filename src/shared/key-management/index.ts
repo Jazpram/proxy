@@ -107,3 +107,4 @@ export { CohereKey } from "./cohere/provider";
 export { QwenKey } from "./qwen/provider";
 export { GlmKey } from "./glm/provider";
 export { MoonshotKey } from "./moonshot/provider";
+export { OpenRouterKey } from "./openrouter/provider"; // <--- ADDED

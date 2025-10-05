@@ -32,8 +32,8 @@ export const addKey: ProxyReqMutator = (manager) => {
 
   if (inboundApi === outboundApi) {
     // Pass streaming information for GPT-5 models that require verified keys for streaming
-    const isStreaming = body.stream === true;
 	// Pass request body for cache-aware key selection (Anthropic, AWS, GCP)
+    const isStreaming = body.stream === true;
     assignedKey = keyPool.get(body.model, service, needsMultimodal, isStreaming, body);
   } else {
     switch (outboundApi) {
@@ -97,6 +97,9 @@ export const addKey: ProxyReqMutator = (manager) => {
       manager.setHeader("api-key", azureKey);
       break;
     case "deepseek":
+      manager.setHeader("Authorization", `Bearer ${assignedKey.key}`);
+      break;
+    case "openrouter":
       manager.setHeader("Authorization", `Bearer ${assignedKey.key}`);
       break;
     case "xai":

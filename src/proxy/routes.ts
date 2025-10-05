@@ -13,6 +13,7 @@ import { openaiImage } from "./openai-image";
 import { deepseek } from "./deepseek";
 import { xai } from "./xai";
 import { cohere } from "./cohere";
+import { openrouter } from "./openrouter";
 import { qwen } from "./qwen";
 import { glm } from "./glm";
 import { moonshot } from "./moonshot";
@@ -61,6 +62,7 @@ proxyRouter.use("/cohere", addV1, cohere);
 proxyRouter.use("/qwen", addV1, qwen);
 proxyRouter.use("/glm", addV1, glm);
 proxyRouter.use("/moonshot", addV1, moonshot);
+proxyRouter.use("/openrouter", openrouter);
 
 // Redirect browser requests to the homepage.
 proxyRouter.get("*", (req, res, next) => {

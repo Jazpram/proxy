@@ -5,6 +5,7 @@ import { OpenAIChatMessage } from "../../../../shared/api-schemas";
 import { GoogleAIChatMessage } from "../../../../shared/api-schemas/google-ai";
 import { keyPool } from "../../../../shared/key-management";
 import { config } from "../../../../config";
+
 import {
   AnthropicChatMessage,
   flattenAnthropicMessages,
@@ -19,7 +20,7 @@ import { isGrokVisionModel } from "../../../../shared/api-schemas/xai";
 /**
  * Given a request with an already-transformed body, counts the number of
  * tokens and assigns the count to the request.
-  *
+ *
  * If remote token counting is enabled, we temporarily get a key from the pool
  * to use the remote API, then clear it. The actual key assignment happens
  * later in the mutators after the request is dequeued.
@@ -28,6 +29,7 @@ import { isGrokVisionModel } from "../../../../shared/api-schemas/xai";
 export const countPromptTokens: RequestPreprocessor = async (req) => {
   const service = req.outboundApi;
   let result;
+  
   // For remote token counting, temporarily get a key from the pool
   // We don't permanently assign it - that happens in mutators after dequeue
   // IMPORTANT: Don't pass req.body here to avoid premature cache fingerprinting
@@ -50,7 +52,6 @@ export const countPromptTokens: RequestPreprocessor = async (req) => {
       );
     }
   }
-
 
   switch (service) {
     case "openai": {

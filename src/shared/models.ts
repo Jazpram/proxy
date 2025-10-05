@@ -19,6 +19,7 @@ export type LLMService =
   | "xai"
   | "cohere"
   | "qwen"
+  | "openrouter"
   | "glm"
   | "moonshot";
 
@@ -66,6 +67,7 @@ export type CohereModelFamily = "cohere";
 export type QwenModelFamily = "qwen";
 export type GlmModelFamily = "glm";
 export type MoonshotModelFamily = "moonshot";
+export type OpenRouterModuleFamily = "openrouter-paid" | "openrouter-free";
 
 export type ModelFamily =
   | OpenAIModelFamily
@@ -80,6 +82,7 @@ export type ModelFamily =
   | CohereModelFamily
   | QwenModelFamily
   | GlmModelFamily
+  | OpenRouterModuleFamily
   | MoonshotModelFamily;
 
 export const MODEL_FAMILIES = (<A extends readonly ModelFamily[]>(
@@ -154,6 +157,8 @@ export const MODEL_FAMILIES = (<A extends readonly ModelFamily[]>(
   "azure-o4-mini",
   "azure-codex-mini",
   "azure-gpt-image",
+  "openrouter-paid", // <--- ADDED
+  "openrouter-free", // <--- ADDED
 ] as const);
 
 export const LLM_SERVICES = (<A extends readonly LLMService[]>(
@@ -170,6 +175,7 @@ export const LLM_SERVICES = (<A extends readonly LLMService[]>(
   "xai",
   "cohere",
   "qwen",
+  "openrouter",
   "glm",
   "moonshot"
 ] as const);
@@ -246,7 +252,39 @@ export const MODEL_FAMILY_SERVICE: {
   "mistral-small": "mistral-ai",
   "mistral-medium": "mistral-ai",
   "mistral-large": "mistral-ai",
+  "openrouter-paid": "openrouter", // <--- ADDED
+  "openrouter-free": "openrouter", // <--- ADDED
 };
+
+const FREE_OPENROUTER_MODELS = [
+  "nvidia/nemotron-nano-9b-v2:free", "deepseek/deepseek-chat-v3.1:free", 
+  "openai/gpt-oss-120b:free", "openai/gpt-oss-20b:free", "z-ai/glm-4.5-air:free", 
+  "qwen/qwen3-coder:free", "moonshotai/kimi-k2:free", "cognitivecomputations/dolphin-mistral-24b-venice-edition:free", 
+  "google/gemma-3n-e2b-it:free", "tencent/hunyuan-a13b-instruct:free", "tngtech/deepseek-r1t2-chimera:free", 
+  "mistralai/mistral-small-3.2-24b-instruct:free", "moonshotai/kimi-dev-72b:free", "deepseek/deepseek-r1-0528-qwen3-8b:free", 
+  "deepseek/deepseek-r1-0528:free", "mistralai/devstral-small-2505:free", "google/gemma-3n-e4b-it:free", 
+  "meta-llama/llama-3.3-8b-instruct:free", "qwen/qwen3-4b:free", "qwen/qwen3-30b-a3b:free", 
+  "qwen/qwen3-8b:free", "qwen/qwen3-14b:free", "qwen/qwen3-235b-a22b:free", 
+  "tngtech/deepseek-r1t-chimera:free", "microsoft/mai-ds-r1:free", "shisa-ai/shisa-v2-llama3.3-70b:free", 
+  "arliai/qwq-32b-arliai-rpr-v1:free", "agentica-org/deepcoder-14b-preview:free", "moonshotai/kimi-vl-a3b-thinking:free", 
+  "nvidia/llama-3.1-nemotron-ultra-253b-v1:free", "meta-llama/llama-4-maverick:free", "meta-llama/llama-4-scout:free", 
+  "qwen/qwen2.5-vl-32b-instruct:free", "deepseek/deepseek-chat-v3-0324:free", "mistralai/mistral-small-3.1-24b-instruct:free", 
+  "google/gemma-3-4b-it:free", "google/gemma-3-12b-it:free", "rekaai/reka-flash-3:free", 
+  "google/gemma-3-27b-it:free", "qwen/qwq-32b:free", "nousresearch/deephermes-3-llama-3-8b-preview:free", 
+  "cognitivecomputations/dolphin3.0-r1-mistral-24b:free", "cognitivecomputations/dolphin3.0-mistral-24b:free", 
+  "qwen/qwen2.5-vl-72b-instruct:free", "mistralai/mistral-small-24b-instruct-2501:free", "deepseek/deepseek-r1-distill-qwen-14b:free", 
+  "deepseek/deepseek-r1-distill-llama-70b:free", "deepseek/deepseek-r1:free", "google/gemini-2.0-flash-exp:free", 
+  "meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen-2.5-coder-32b-instruct:free", "meta-llama/llama-3.2-3b-instruct:free", 
+  "qwen/qwen-2.5-72b-instruct:free", "meta-llama/llama-3.1-405b-instruct:free", "mistralai/mistral-nemo:free", 
+  "google/gemma-2-9b-it:free", "mistralai/mistral-7b-instruct:free",
+];
+
+export function getOpenRouterModuleFamily(model: string): OpenRouterModuleFamily {
+  if (model.includes(":free") || FREE_OPENROUTER_MODELS.includes(model)) {
+    return "openrouter-free";
+  }
+  return "openrouter-paid";
+}
 
 export const IMAGE_GEN_MODELS: ModelFamily[] = ["dall-e", "azure-dall-e", "gpt-image", "azure-gpt-image", "gemini-flash"];
 
@@ -430,6 +468,8 @@ export function getModelFamilyForRequest(req: Request): ModelFamily {
     modelFamily = getAzureOpenAIModelFamily(model);
   } else if (req.service === "qwen") {
     modelFamily = "qwen";
+  } else if (req.service === "openrouter") { // <--- ADDED
+    modelFamily = getOpenRouterModuleFamily(model);
   } else if (req.service === "glm") {
     modelFamily = "glm";
   } else {

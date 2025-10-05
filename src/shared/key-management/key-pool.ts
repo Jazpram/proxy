@@ -19,6 +19,7 @@ import { CohereKeyProvider } from "./cohere/provider";
 import { QwenKeyProvider } from "./qwen/provider";
 import { GlmKeyProvider } from "./glm/provider";
 import { MoonshotKeyProvider } from "./moonshot/provider";
+import { OpenRouterKeyProvider } from "./openrouter/provider";
 
 type AllowedPartial = OpenAIKeyUpdate | AnthropicKeyUpdate | Partial<GcpKey>;
 
@@ -42,6 +43,7 @@ export class KeyPool {
     this.keyProviders.push(new QwenKeyProvider());
     this.keyProviders.push(new GlmKeyProvider());
     this.keyProviders.push(new MoonshotKeyProvider());
+    this.keyProviders.push(new OpenRouterKeyProvider()); // <--- ADDED
   }
 
   public init() {
@@ -221,6 +223,8 @@ export class KeyPool {
       return "glm";
     } else if (model.includes("moonshot")) {
       return "moonshot";
+    } else if (model.includes("openrouter")) { // <--- ADDED
+      return "openrouter";
     } else if (model.startsWith("anthropic.claude")) {
       // AWS offers models from a few providers
       // https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids-arns.html

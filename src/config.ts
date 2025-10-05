@@ -66,7 +66,10 @@ type Config = {
    * Comma-delimited list of Moonshot API keys.
    */
   moonshotKey?: string;
-
+  /**
+   * Comma-delimited list of OpenRouter API keys.
+   */
+  openRouterKey?: string; // <--- ADDED
   /**
    * Comma-delimited list of AWS credentials. Each credential item should be a
    * colon-delimited list of access key, secret key, and AWS region.
@@ -285,8 +288,6 @@ type Config = {
   /** Google Sheets spreadsheet ID. */
   googleSheetsSpreadsheetId?: string;
   /** Whether to periodically check keys for usage and validity. */
-  checkKeys: boolean;
-  /** Whether to publicly show total token costs on the info page. */
     /**
    * Whether to use remote API token counting endpoints for Anthropic, AWS
    * Bedrock, and GCP Vertex AI. When enabled, the proxy will use the provider's
@@ -296,6 +297,8 @@ type Config = {
    */
   useRemoteTokenCounting: boolean;
 
+  checkKeys: boolean;
+  /** Whether to publicly show total token costs on the info page. */
   showTokenCosts: boolean;
   /**
    * Comma-separated list of origins to block. Requests matching any of these
@@ -523,6 +526,7 @@ export const config: Config = {
   xaiKey: getEnvWithDefault("XAI_KEY", ""),
   cohereKey: getEnvWithDefault("COHERE_KEY", ""),
   moonshotKey: getEnvWithDefault("MOONSHOT_KEY", ""),
+  openRouterKey: getEnvWithDefault("OPENROUTER_AI_KEY", ""),
   awsCredentials: getEnvWithDefault("AWS_CREDENTIALS", ""),
   gcpCredentials: getEnvWithDefault("GCP_CREDENTIALS", ""),
   azureCredentials: getEnvWithDefault("AZURE_CREDENTIALS", ""),
@@ -836,6 +840,7 @@ export const OMITTED_KEYS = [
   "glmKey",
   "moonshotKey",
   "mistralAIKey",
+  "openRouterKey",
   "awsCredentials",
   "gcpCredentials",
   "azureCredentials",

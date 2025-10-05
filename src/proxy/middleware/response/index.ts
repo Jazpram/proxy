@@ -273,20 +273,29 @@ const handleUpstreamErrors: ProxyResHandlerWithBody = async (
       case "moonshot":
         errorPayload.proxy_note = `The Moonshot API rejected the request. Check the error message for details.`;
         break;
+      case "openrouter":
+        await handleOpenRouterError(req, errorPayload);
+        break;
       default:
         assertNever(service);
     }
   } else if (statusCode === 401) {
     // Universal 401 handling - authentication failed, retry with different key
+    if (service === "openrouter") {
+      await handleOpenRouterError(req, errorPayload);
+    } else {
     keyPool.disable(req.key!, "revoked");
     await reenqueueRequest(req);
     throw new RetryableError(`${service} key authentication failed, retrying with different key.`);
+    }
   } else if (statusCode === 402) {
     // Deepseek specific - insufficient balance
     if (service === "deepseek") {
       keyPool.disable(req.key!, "quota");
       await reenqueueRequest(req);
       throw new RetryableError("Deepseek key has insufficient balance, retrying with different key.");
+    } else if (service === "openrouter") {
+      await handleOpenRouterError(req, errorPayload);
     }
   } else if (statusCode === 405) {
     // Xai specific - method not allowed, treat as retryable
@@ -347,6 +356,19 @@ const handleUpstreamErrors: ProxyResHandlerWithBody = async (
       case "xai":
         await reenqueueRequest(req);
         throw new RetryableError("XAI key lacks permissions, retrying with different key.");
+      case "openrouter": // <--- ADDED OPENROUTER 403 LOGIC
+        const message = errorPayload.error?.message || "";
+        if (message.includes("Key limit exceeded")) {
+            // 403 Forbidden с текстом "Key limit exceeded" - это исчерпание квоты.
+            keyPool.disable(req.key!, "quota");
+            await reenqueueRequest(req);
+            throw new RetryableError("OpenRouter key limit exceeded (403), retrying with different key.");
+        } else {
+            // Любой другой 403, вероятно, является невалидным/отозванным ключом.
+            keyPool.disable(req.key!, "revoked");
+            await reenqueueRequest(req);
+            throw new RetryableError("OpenRouter key is invalid or lacks permissions (403), retrying with different key.");
+        }
     }
   } else if (statusCode === 429) {
     switch (service) {
@@ -387,6 +409,9 @@ const handleUpstreamErrors: ProxyResHandlerWithBody = async (
         case "moonshot":
           await handleMoonshotRateLimitError(req, errorPayload);
           break;
+      case "openrouter":
+          await handleOpenRouterError(req, errorPayload);
+          break;
       default:
         assertNever(service as never);
     }
@@ -419,6 +444,9 @@ const handleUpstreamErrors: ProxyResHandlerWithBody = async (
       case "qwen":
         errorPayload.proxy_note = `The key assigned to your prompt does not support the requested model.`;
         break;
+      case "openrouter":
+          await handleOpenRouterError(req, errorPayload);
+          break;
       default:
         assertNever(service as never);
     }
@@ -1075,6 +1103,58 @@ const incrementUsage: ProxyResHandlerWithBody = async (_proxyRes, req) => {
   }
 };
 
+
+async function handleOpenRouterError(
+  req: Request,
+  errorPayload: ProxiedErrorPayload
+) {
+  // NOTE: OpenRouter's 403 (Key limit exceeded) is handled directly in handleUpstreamErrors
+  
+  const statusCode = req.key!.service === "openrouter" ? (req.res as any)?.statusCode : undefined;
+  const error = errorPayload.error || {};
+  const message = error.message || errorPayload.message || "";
+  
+  // 400 Bad Request
+  if (statusCode === 400) {
+    if (message.includes("Key limit exceeded")) {
+      keyPool.disable(req.key!, "quota");
+      await reenqueueRequest(req);
+      throw new RetryableError("OpenRouter key limit exceeded (400), retrying with different key.");
+    }
+    errorPayload.proxy_note = `The OpenRouter API rejected the request. Check the error message for details.`;
+  }
+  
+  // 401 Unauthorized
+  if (statusCode === 401) {
+    keyPool.disable(req.key!, "revoked");
+    await reenqueueRequest(req);
+    throw new RetryableError("OpenRouter key authentication failed, retrying with different key.");
+  }
+  
+  // 402 Payment Required
+  if (statusCode === 402) {
+    keyPool.disable(req.key!, "quota");
+    await reenqueueRequest(req);
+    throw new RetryableError("OpenRouter key has insufficient balance/credits, retrying with different key.");
+  }
+  
+  // 404 Not Found (e.g., model not found)
+  if (statusCode === 404) {
+    // Treat as key unable to access model or service (revoked capabilities)
+    keyPool.disable(req.key!, "revoked"); 
+    await reenqueueRequest(req);
+    throw new RetryableError("OpenRouter key does not support the requested model (404), retrying with different key.");
+  }
+  
+  // 429 Too Many Requests
+  if (statusCode === 429) {
+    keyPool.markRateLimited(req.key!);
+    await reenqueueRequest(req);
+    throw new RetryableError("OpenRouter rate-limited request re-enqueued.");
+  }
+}
+
+
 const countResponseTokens: ProxyResHandlerWithBody = async (
   _proxyRes,
   req,
@@ -1094,7 +1174,6 @@ const countResponseTokens: ProxyResHandlerWithBody = async (
   try {
     assertJsonResponse(body);
     const service = req.outboundApi;
-
     // Try to get token counts from the API response first
     let tokens: { token_count: number; tokenizer: string; reasoning_tokens?: number } | null = null;
 
@@ -1196,18 +1275,19 @@ const countResponseTokens: ProxyResHandlerWithBody = async (
         tokenizer: "api-usage-data",
       };
 
-      if (req.service === "openai" || req.service === "azure" || req.service === "deepseek" || req.service === "glm" || req.service === "cohere" || req.service === "qwen") {
-        // O1 consumes (a significant amount of) invisible tokens for the chain-
-        // of-thought reasoning. We have no way to count these other than to check
-        // the response body.
-        tokens.reasoning_tokens =
-          body.usage?.completion_tokens_details?.reasoning_tokens;
-      }
-
-      req.log.debug(
-        { service, outputTokens: tokens.token_count, usage: body.usage },
-        "Got output token count from API usage data"
-      );
+    
+    if (req.service === "openai" || req.service === "azure" || req.service === "deepseek" || req.service === "glm" || req.service === "cohere" || req.service === "qwen") {
+      // O1 consumes (a significant amount of) invisible tokens for the chain-
+      // of-thought reasoning. We have no way to count these other than to check
+      // the response body.
+      tokens.reasoning_tokens =
+        body.usage?.completion_tokens_details?.reasoning_tokens;
+    }
+	
+	req.log.debug(
+      { service, outputTokens: tokens.token_count, usage: body.usage },
+      "Got output token count from API usage data"
+    );
     }
 
     // Fall back to local tokenization if no usage data is available
@@ -1219,6 +1299,7 @@ const countResponseTokens: ProxyResHandlerWithBody = async (
         "Counted output tokens locally (no API usage data)"
       );
     }
+
 
     req.log.debug(
       { service, prevOutputTokens: req.outputTokens, tokens },
@@ -1336,6 +1417,7 @@ function checkForCacheControl(body: any): boolean {
 
   return false;
 }
+
 
 function assertJsonResponse(body: any): asserts body is Record<string, any> {
   if (typeof body !== "object") {

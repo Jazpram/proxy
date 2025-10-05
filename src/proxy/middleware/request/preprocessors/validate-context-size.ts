@@ -9,6 +9,7 @@ const OPENAI_MAX_CONTEXT = config.maxContextTokensOpenAI;
 // todo: make configurable
 const GOOGLE_AI_MAX_CONTEXT = 2048000;
 const MISTRAL_AI_MAX_CONTENT = 131072;
+const OPENROUTER_MAX_CONTEXT = 2048000;
 
 /**
  * Assigns `req.promptTokens` and `req.outputTokens` based on the request body
@@ -45,6 +46,10 @@ export const validateContextSize: RequestPreprocessor = async (req) => {
     case "openai-image":
       return;
     default:
+      if (req.service === "openrouter") { // <--- ADDED
+        proxyMax = OPENROUTER_MAX_CONTEXT;
+        break;
+      }
       assertNever(req.outboundApi);
   }
   proxyMax ||= Number.MAX_SAFE_INTEGER;
@@ -161,6 +166,9 @@ export const validateContextSize: RequestPreprocessor = async (req) => {
     modelMax = 128000;
   } else if (model.match(/^magistral/)) {
     modelMax = 40000;
+  } else if (req.service === "openrouter") { // <--- ADDED: Catch-all for OR models
+    // Set a very high limit for OpenRouter models, relying more on proxyMax and OR's own limits.
+    modelMax = OPENROUTER_MAX_CONTEXT; 
   } else if (model.match(/tral/)) {
     // catches mistral, mixtral, codestral, mathstral, etc. mistral models have
     // no name convention and wildly different context windows so this is a
