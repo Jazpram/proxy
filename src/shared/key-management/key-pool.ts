@@ -25,6 +25,8 @@ type AllowedPartial = OpenAIKeyUpdate | AnthropicKeyUpdate | Partial<GcpKey>;
 
 export class KeyPool {
   private keyProviders: KeyProvider[] = [];
+  // Добавляем хранилище для счетчика запросов
+  private modelFamilyRequestCounts: Map<ModelFamily, number> = new Map();
   private recheckJobs: Partial<Record<LLMService, schedule.Job | null>> = {
     openai: null,
   };
@@ -43,7 +45,7 @@ export class KeyPool {
     this.keyProviders.push(new QwenKeyProvider());
     this.keyProviders.push(new GlmKeyProvider());
     this.keyProviders.push(new MoonshotKeyProvider());
-    this.keyProviders.push(new OpenRouterKeyProvider()); // <--- ADDED
+    this.keyProviders.push(new OpenRouterKeyProvider());
   }
 
   public init() {
@@ -57,7 +59,7 @@ export class KeyPool {
     this.scheduleRecheck();
   }
 
-  public get(model: string, service?: LLMService, multimodal?: boolean, streaming?: boolean, requestBody?: any): Key {
+  public get(model: string, service?: LLMService, multimodal?: boolean, streaming?: boolean): Key {
     // hack for some claude requests needing keys with particular permissions
     // even though they use the same models as the non-multimodal requests
     if (multimodal) {
@@ -65,7 +67,7 @@ export class KeyPool {
     }
     
     const queryService = service || this.getServiceForModel(model);
-    return this.getKeyProvider(queryService).get(model, streaming, requestBody);
+    return this.getKeyProvider(queryService).get(model, streaming);
   }
 
   public list(): Omit<Key, "key">[] {
@@ -124,14 +126,7 @@ export class KeyPool {
     // or enhancing getServiceForModel to also return family, or passing family directly.
     // For now, let's assume the provider can handle the modelName or we derive family.
     // This part is tricky as KeyPool's getServiceForModel is for service, not family directly from a generic model string.
-    // Let's assume for now the provider's incrementUsage can take modelName and derive family,
-    // or the KeyProvider interface's incrementUsage should take modelName.
-    // The KeyProvider interface was changed to modelFamily. So we MUST derive it.
-    // This requires a utility function similar to what's in user-store or models.ts.
-    // For now, I'll placeholder this derivation. This is a critical point.
-    // Placeholder: const modelFamily = this.getModelFamilyForModel(modelName, key.service);
-    // This is complex because getModelFamilyForModel needs the service context.
-    // Let's assume the `modelName` passed here is actually `modelFamily` for now,
+    // Let's assume for now the `modelName` passed here is actually `modelFamily` for now,
     // or that the caller will resolve it.
     // The KeyProvider interface expects `modelFamily`. The caller in middleware/response/index.ts
     // has `model` (name) and `req.outboundApi`. It should resolve to family there.
@@ -140,6 +135,17 @@ export class KeyPool {
     // So, changing `model: string` to `modelFamily: ModelFamily` in signature.
     // This change needs to be propagated to the caller.
     provider.incrementUsage(key.hash, modelName as ModelFamily, usage); // Casting modelName, assuming caller provides family
+  }
+
+  /** Increments the request count for a specific model family. */
+  public incrementRequestCount(modelFamily: ModelFamily): void {
+    const currentCount = this.modelFamilyRequestCounts.get(modelFamily) || 0;
+    this.modelFamilyRequestCounts.set(modelFamily, currentCount + 1);
+  }
+
+  /** Returns the request count for a specific model family. */
+  public getRequestCount(modelFamily: ModelFamily): number {
+    return this.modelFamilyRequestCounts.get(modelFamily) || 0;
   }
 
   public getLockoutPeriod(family: ModelFamily): number {
@@ -223,7 +229,7 @@ export class KeyPool {
       return "glm";
     } else if (model.includes("moonshot")) {
       return "moonshot";
-    } else if (model.includes("openrouter")) { // <--- ADDED
+    } else if (model.includes("openrouter")) {
       return "openrouter";
     } else if (model.startsWith("anthropic.claude")) {
       // AWS offers models from a few providers
