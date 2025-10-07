@@ -208,7 +208,7 @@ type BaseFamilyInfo = {
   revokedKeys?: number;
   proomptersInQueue?: number;
   estimatedQueueTime?: string;
-  Request?: number; // <--- ADDED
+  Requests?: number; // <--- ADDED
 };
 type OpenAIInfo = BaseFamilyInfo & {
   trialKeys?: number;
@@ -769,7 +769,7 @@ function getInfoForFamily(family: ModelFamily): BaseFamilyInfo {
     usage: usageString,
     activeKeys: familyStats.get(`${family}__active`) || 0,
     revokedKeys: familyStats.get(`${family}__revoked`) || 0,
-	Request: keyPool.getRequestCount(family), // <--- ADDED
+	Requests: keyPool.getRequestCount(family), // <--- ADDED
   };
 
   // Add service-specific stats to the info object.
