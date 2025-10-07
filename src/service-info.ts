@@ -764,12 +764,14 @@ function getInfoForFamily(family: ModelFamily): BaseFamilyInfo {
   } else {
     usageString = `${prettyTokens(0)} tokens${getCostSuffix(0)}`;
   }
-  
+  const queueInfo = getQueueInformation(family);
   let info: BaseFamilyInfo & OpenAIInfo & AnthropicInfo & AwsInfo & GcpInfo & OpenRouterInfo = {
     usage: usageString,
     activeKeys: familyStats.get(`${family}__active`) || 0,
     revokedKeys: familyStats.get(`${family}__revoked`) || 0,
 	Requests: keyPool.getRequestCount(family), // <--- ADDED
+    proomptersInQueue: queueInfo.proomptersInQueue,
+    estimatedQueueTime: queueInfo.estimatedQueueTime,
   };
 
   // Add service-specific stats to the info object.
@@ -875,10 +877,7 @@ function getInfoForFamily(family: ModelFamily): BaseFamilyInfo {
     }
   }
 
-  // Add queue stats to the info object.
-  const queueInfo = getQueueInformation(family);
-  info.proomptersInQueue = queueInfo.proomptersInQueue;
-  info.estimatedQueueTime = queueInfo.estimatedQueueTime;
+
 
   return info;
 }
