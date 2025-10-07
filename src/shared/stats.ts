@@ -20,6 +20,8 @@ const MODEL_PRICING: Record<ModelFamily, { input: number; output: number } | und
   "azure-gpt5-nano": { input: 0.05, output: 0.40 },
   "gpt5-chat-latest": { input: 1.25, output: 10.00 },
   "azure-gpt5-chat-latest": { input: 1.25, output: 10.00 },
+  "gpt5-pro": { input: 15.00, output: 120.00 },
+  "azure-gpt5-pro": { input: 15.00, output: 120.00 },
   "gpt45": { input: 75.00, output: 150.00 }, // Example, needs verification if this model family is still current with this pricing
   "azure-gpt45": { input: 75.00, output: 150.00 }, // Example, needs verification
   "gpt4o": { input: 2.50, output: 10.00 },

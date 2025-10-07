@@ -107,6 +107,8 @@ export const validateContextSize: RequestPreprocessor = async (req) => {
   } else if (model.match(/^o1-pro(-\d{4}-\d{2}-\d{2})?$/)) {
     modelMax = 200000;
   } else if (model.match(/^o3-pro(-\d{4}-\d{2}-\d{2})?$/)) {
+    modelMax = 400000;
+  } else if (model.match(/^gpt-5-pro(-\d{4}-\d{2}-\d{2})?$/)) {
     modelMax = 200000;
   } else if (model.match(/^o1-preview(-\d{4}-\d{2}-\d{2})?$/)) {
     modelMax = 128000;

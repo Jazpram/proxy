@@ -101,6 +101,18 @@ function applyOpenAIResponsesTransform(req: Request): void {
         }));
       }
     }
+    // Handle reasoning_effort for models that require it
+    const model = req.body.model || "";
+    const isO3Pro = model === "o3-pro" || model.startsWith("o3-pro-");
+    const isGpt5Pro = model === "gpt-5-pro" || model.startsWith("gpt-5-pro-");
+    
+    // o3-pro and gpt-5-pro default to and only support "high" reasoning effort
+    if (isO3Pro || isGpt5Pro) {
+      if (!req.body.reasoning_effort || req.body.reasoning_effort !== "high") {
+        req.body.reasoning_effort = "high";
+        req.log.info({ model, reasoning_effort: "high" }, "Set reasoning_effort to 'high' (required for this model)");
+      }
+    }
 
     req.log.info({
       originalModel: originalBody.model,

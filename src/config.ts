@@ -969,6 +969,6 @@ function parseCsv(val: string): string[] {
 
 function getDefaultModelFamilies(): ModelFamily[] {
   return MODEL_FAMILIES.filter(
-    (f) => !f.includes("o1-pro") && !f.includes("o3-pro")
+    (f) => !f.includes("o1-pro") && !f.includes("o3-pro") && !f.includes("gpt5-pro")
   ) as ModelFamily[];
 }

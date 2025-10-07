@@ -37,6 +37,7 @@ export type OpenAIModelFamily =
   | "gpt5-mini"
   | "gpt5-nano"
   | "gpt5-chat-latest"
+  | "gpt5-pro"
   | "o1"
   | "o1-mini"
   | "o1-pro"
@@ -107,6 +108,7 @@ export const MODEL_FAMILIES = (<A extends readonly ModelFamily[]>(
   "gpt5-mini",
   "gpt5-nano",
   "gpt5-chat-latest",
+  "gpt5-pro",
   "o1",
   "o1-mini",
   "o1-pro",
@@ -147,6 +149,7 @@ export const MODEL_FAMILIES = (<A extends readonly ModelFamily[]>(
   "azure-gpt5-mini",
   "azure-gpt5-nano",
   "azure-gpt5-chat-latest",
+  "azure-gpt5-pro",
   "azure-dall-e",
   "azure-o1",
   "azure-o1-mini",
@@ -202,6 +205,7 @@ export const MODEL_FAMILY_SERVICE: {
   "gpt5-mini": "openai",
   "gpt5-nano": "openai",
   "gpt5-chat-latest": "openai",
+  "gpt5-pro": "openai",
   "o1": "openai",
   "o1-mini": "openai",
   "o1-pro": "openai",
@@ -235,6 +239,7 @@ export const MODEL_FAMILY_SERVICE: {
   "azure-gpt5-mini": "azure",
   "azure-gpt5-nano": "azure",
   "azure-gpt5-chat-latest": "azure",
+  "azure-gpt5-pro": "azure",
   "azure-dall-e": "azure",
   "azure-o1": "azure",
   "azure-o1-mini": "azure",
@@ -294,6 +299,7 @@ export const OPENAI_MODEL_FAMILY_MAP: { [regex: string]: OpenAIModelFamily } = {
   "^gpt-5-mini(-\\d{4}-\\d{2}-\\d{2})?$": "gpt5-mini",
   "^gpt-5-nano(-\\d{4}-\\d{2}-\\d{2})?$": "gpt5-nano",
   "^gpt-5-chat-latest(-\\d{4}-\\d{2}-\\d{2})?$": "gpt5-chat-latest",
+  "^gpt-5-pro(-\\d{4}-\\d{2}-\\d{2})?$": "gpt5-pro",
   "^gpt-4\\.5(-preview)?(-\\d{4}-\\d{2}-\\d{2})?$": "gpt45",
   "^gpt-4\\.1(-\\d{4}-\\d{2}-\\d{2})?$": "gpt41",
   "^gpt-4\\.1-mini(-\\d{4}-\\d{2}-\\d{2})?$": "gpt41-mini",

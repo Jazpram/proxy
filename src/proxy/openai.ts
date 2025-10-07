@@ -371,6 +371,7 @@ const setupChunkedTransfer: RequestHandler = (req, res, next) => {
 function shouldUseResponsesApi(model: string): boolean {
   return model === "o1-pro" || model.startsWith("o1-pro") ||
          model === "o3-pro" || model.startsWith("o3-pro") ||
+		 model === "gpt-5-pro" || model.startsWith("gpt-5-pro") ||
          model === "codex-mini-latest" || model.startsWith("codex-mini") ||
          model === "gpt-5-codex-latest" || model.startsWith("gpt-5-codex");
 }

@@ -12,6 +12,7 @@ import {
   validateContextSize,
   validateModelFamily,
   validateVision,
+  validateStreaming,
   applyQuotaLimits,
 } from ".";
 
@@ -57,6 +58,7 @@ export const createPreprocessorMiddleware = (
     ...(afterTransform ?? []),
     validateContextSize,
     validateVision,
+	validateStreaming,
     validateModelFamily,
     applyQuotaLimits,
   ];
