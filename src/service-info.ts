@@ -174,7 +174,7 @@ type ModelAggregates = {
   gcpSonnet?: number;
   gcpSonnet35?: number;
   gcpHaiku?: number;
-  queued: number;
+ // queued: number;
   inputTokens: number; // Changed from tokens
   outputTokens: number; // Added
   legacyTokens?: number; // Added for migrated totals
@@ -876,9 +876,9 @@ function getInfoForFamily(family: ModelFamily): BaseFamilyInfo {
   }
 
   // Add queue stats to the info object.
-  const queue = getQueueInformation(family);
-  info.proomptersInQueue = queue.proomptersInQueue;
-  info.estimatedQueueTime = queue.estimatedQueueTime;
+  const queueInfo = getQueueInformation(family);
+  info.proomptersInQueue = queueInfo.proomptersInQueue;
+  info.estimatedQueueTime = queueInfo.estimatedQueueTime;
 
   return info;
 }
