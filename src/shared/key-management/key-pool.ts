@@ -59,7 +59,7 @@ export class KeyPool {
     this.scheduleRecheck();
   }
 
-  public get(model: string, service?: LLMService, multimodal?: boolean, streaming?: boolean): Key {
+  public get(model: string, service?: LLMService, multimodal?: boolean, streaming?: boolean, requestBody?: any): Key {
     // hack for some claude requests needing keys with particular permissions
     // even though they use the same models as the non-multimodal requests
     if (multimodal) {
@@ -67,7 +67,7 @@ export class KeyPool {
     }
     
     const queryService = service || this.getServiceForModel(model);
-    return this.getKeyProvider(queryService).get(model, streaming);
+    return this.getKeyProvider(queryService).get(model, streaming, requestBody);
   }
 
   public list(): Omit<Key, "key">[] {
