@@ -174,7 +174,7 @@ type ModelAggregates = {
   gcpSonnet?: number;
   gcpSonnet35?: number;
   gcpHaiku?: number;
- // queued: number;
+  queued: number;
   inputTokens: number; // Changed from tokens
   outputTokens: number; // Added
   legacyTokens?: number; // Added for migrated totals
@@ -770,8 +770,8 @@ function getInfoForFamily(family: ModelFamily): BaseFamilyInfo {
     activeKeys: familyStats.get(`${family}__active`) || 0,
     revokedKeys: familyStats.get(`${family}__revoked`) || 0,
 	Requests: keyPool.getRequestCount(family), // <--- ADDED
-    proomptersInQueue: queueInfo.proomptersInQueue,
-    estimatedQueueTime: queueInfo.estimatedQueueTime,
+	proomptersInQueue: queueInfo.proomptersInQueue,       // Используем данные из очереди
+    estimatedQueueTime: queueInfo.estimatedQueueTime,   // Используем данные из очереди
   };
 
   // Add service-specific stats to the info object.
