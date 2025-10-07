@@ -200,7 +200,6 @@ type OpenRouterInfo = BaseFamilyInfo & {
   freeActiveKeys?: number;
   overQuotaKeys?: number;
   totalRemainingBalance?: string; // <--- ADDED
-  Request?: number; // <--- ADDED
 };
 
 type BaseFamilyInfo = {

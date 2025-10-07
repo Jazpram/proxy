@@ -1096,6 +1096,7 @@ const incrementUsage: ProxyResHandlerWithBody = async (_proxyRes, req) => {
     // Get modelFamily for the key usage log
     const modelFamilyForKeyPool = req.modelFamily!; // Should be set by getModelFamilyForRequest earlier
     keyPool.incrementUsage(req.key!, modelFamilyForKeyPool, { input: req.promptTokens!, output: req.outputTokens! });
+	keyPool.incrementRequestCount(modelFamilyForKeyPool);
     if (req.user) {
       incrementPromptCount(req.user.token);
       incrementTokenCount(req.user.token, model, req.outboundApi, { input: req.promptTokens!, output: req.outputTokens! });

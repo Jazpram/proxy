@@ -1,7 +1,6 @@
 import type { Request } from "express";
 
 import { ProxyReqManager } from "./proxy-req-manager";
-import { keyPool } from "../../../shared/key-management";
 export {
   createPreprocessorMiddleware,
   createEmbeddingsPreprocessorMiddleware,
@@ -54,31 +53,3 @@ export type RequestPreprocessor = (req: Request) => void | Promise<void>;
 export type ProxyReqMutator = (
   changeManager: ProxyReqManager
 ) => void | Promise<void>;
-
-
-const incrementUsage: ProxyResHandlerWithBody = async (_proxyRes, req) => {
-  if (isTextGenerationRequest(req) || isImageGenerationRequest(req)) {
-    const model = req.body.model;
-    const tokensUsed = req.promptTokens! + req.outputTokens!;
-    req.log.debug(
-      {
-        model,
-        tokensUsed,
-        promptTokens: req.promptTokens,
-        outputTokens: req.outputTokens,
-      },
-      `Incrementing usage for model`
-    );
-    // Get modelFamily for the key usage log
-    const modelFamilyForKeyPool = req.modelFamily!; // Should be set by getModelFamilyForRequest earlier
-    keyPool.incrementUsage(req.key!, modelFamilyForKeyPool, { input: req.promptTokens!, output: req.outputTokens! });
-    
-    // Инкрементируем счетчик запросов для семейства моделей
-    keyPool.incrementRequestCount(modelFamilyForKeyPool); // <--- ADDED
-
-    if (req.user) {
-      incrementPromptCount(req.user.token);
-      incrementTokenCount(req.user.token, model, req.outboundApi, { input: req.promptTokens!, output: req.outputTokens! });
-    }
-  }
-};
