@@ -128,13 +128,13 @@ export const validateContextSize: RequestPreprocessor = async (req) => {
     modelMax = 200000;
   } else if (model.match(/^claude-3/)) {
     modelMax = 200000;
-  } else if (model.match(/^claude-(?:sonnet|opus)-4(?:-5)?/)) {
+  } else if (model.match(/^claude-(?:sonnet|opus|haiku)-4(?:-5)?/)) {
     modelMax = 1000000;
   } else if (model.match(/^gemini-/)) {
     modelMax = 1024000;
   } else if (model.match(/^anthropic\.claude-3/)) {
     modelMax = 200000;
-  } else if (model.match(/^anthropic\.claude-(?:sonnet|opus)-4(?:-5)?/)) {
+  } else if (model.match(/^anthropic\.claude-(?:sonnet|opus|haiku)-4(?:-5)?/)) {
     modelMax = 1000000;
   } else if (model.match(/^anthropic\.claude-v2:\d/)) {
     modelMax = 200000;

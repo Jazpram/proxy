@@ -28,6 +28,9 @@ export const claudeModels: ClaudeModelMapping[] = [
   { awsId: "anthropic.claude-sonnet-4-5-20250929-v1:0", anthropicId: "claude-sonnet-4-5-20250929", displayName: "Claude 4.5 Sonnet" },
   { awsId: "anthropic.claude-sonnet-4-5-20250929-v1:0", anthropicId: "claude-sonnet-4-5", displayName: "Claude 4.5 Sonnet" },
   { awsId: "anthropic.claude-sonnet-4-5-20250929-v1:0", anthropicId: "claude-sonnet-4-5-latest", displayName: "Claude 4.5 Sonnet (Latest)" },
+  { awsId: "anthropic.claude-haiku-4-5-20251001-v1:0", anthropicId: "claude-haiku-4-5-20251001", displayName: "Claude 4.5 Haiku" },
+  { awsId: "anthropic.claude-haiku-4-5-20251001-v1:0", anthropicId: "claude-haiku-4-5", displayName: "Claude 4.5 Haiku" },
+  { awsId: "anthropic.claude-haiku-4-5-20251001-v1:0", anthropicId: "claude-haiku-4-5-latest", displayName: "Claude 4.5 Haiku (Latest)" },
 ];
 
 export function findByAwsId(awsId: string): ClaudeModelMapping | undefined {

@@ -575,7 +575,9 @@ function addKeyToAggregates(k: KeyPoolKey) {
             addToFamily(`aws-claude__awsSonnet3_5`, 1);
           } else if (id.includes("claude-3-7-sonnet")) {
             addToFamily(`aws-claude__awsSonnet3_7`, 1);
-          } else if (id.includes("claude-3-haiku")) {
+          } else if (id.includes("claude-3-haiku") || id.includes("claude-3-5-haiku")) {
+            addToFamily(`aws-claude__awsHaiku`, 1);
+          } else if (id.includes("haiku-4-5")) {
             addToFamily(`aws-claude__awsHaiku`, 1);
           } else if (id.includes("sonnet-4-5")) {
             addToFamily(`aws-claude__awsSonnet4_5`, 1);

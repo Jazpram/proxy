@@ -104,7 +104,8 @@ const preprocessAwsTextRequest: RequestHandler = (req, res, next) => {
   const model = req.body.model;
   const isClaude4Model =
     model?.includes("claude-sonnet-4") ||
-    model?.includes("claude-opus-4");
+    model?.includes("claude-opus-4") ||
+    model?.includes("claude-haiku-4");
   if (model?.includes("claude-3") || isClaude4Model) {
     textToChatPreprocessor(req, res, next);
   } else {
@@ -130,7 +131,8 @@ const preprocessOpenAICompatRequest: RequestHandler = (req, res, next) => {
   const model = req.body.model;
   const isClaude4Model =
     model?.includes("claude-sonnet-4") ||
-    model?.includes("claude-opus-4");
+    model?.includes("claude-opus-4") ||
+    model?.includes("claude-haiku-4");
   if (model?.includes("claude-3") || isClaude4Model) {
     oaiToAwsChatPreprocessor(req, res, next);
   } else {
@@ -345,10 +347,13 @@ function maybeReassignModel(req: Request) {
       // Mapping "claude-4.5-..." variants to their actual AWS Bedrock IDs
       // as defined in src/shared/claude-models.ts.
       switch (name) {
+        case "haiku":
+          req.body.model = "anthropic.claude-haiku-4-5-20251001-v1:0";
+          return;
         case "sonnet":
           req.body.model = "anthropic.claude-sonnet-4-5-20250929-v1:0";
           return;
-        // No opus or haiku variants for 4.5 yet
+        // No opus variant for 4.5 yet
       }
       break;
   }

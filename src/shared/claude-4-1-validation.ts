@@ -73,7 +73,10 @@ function isClaude41OpusModel(model: string): boolean {
   if (model.includes("claude-opus-4-1")) return true;
   
   // sonnet45
-  if (model.includes("claude-sonnet-4-5")) return true
+  if (model.includes("claude-sonnet-4-5")) return true;
+  
+  // haiku45
+  if (model.includes("claude-haiku-4-5")) return true;
   
   return false;
 }

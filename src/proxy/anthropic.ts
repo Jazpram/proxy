@@ -196,10 +196,11 @@ function setAnthropicBetaHeader(req: Request) {
     betaHeaders.push("extended-cache-ttl-2025-04-11");
   }
   
-  // Add 1M context beta header for Claude Sonnet 4/Opus 4 if context > 200k tokens
+  // Add 1M context beta header for Claude Sonnet 4/Opus 4/Haiku 4.5 if context > 200k tokens
   const supportsBigContext =
     model?.includes("claude-sonnet-4") ||
-    model?.includes("claude-opus-4");
+    model?.includes("claude-opus-4") ||
+    model?.includes("claude-haiku-4");
   if (supportsBigContext && req.promptTokens && req.outputTokens) {
     const contextTokens = req.promptTokens + req.outputTokens;
     if (contextTokens > 200000) {
@@ -226,7 +227,7 @@ function addWebSearchTool(req: Request) {
   // Check if this is a Claude model that supports web search and if web search is enabled
   const isClaude35 = req.body.model?.includes("claude-3-5") || req.body.model?.includes("claude-3.5");
   const isClaude37 = req.body.model?.includes("claude-3-7") || req.body.model?.includes("claude-3.7");
-  const isClaude4 = req.body.model?.includes("claude-sonnet-4") || req.body.model?.includes("claude-opus-4");
+  const isClaude4 = req.body.model?.includes("claude-sonnet-4") || req.body.model?.includes("claude-opus-4") || req.body.model?.includes("claude-haiku-4");
   const useWebSearch = (isClaude35 || isClaude37 || isClaude4) && Boolean(req.body.enable_web_search);
   
   if (useWebSearch) {
@@ -328,7 +329,8 @@ const preprocessAnthropicTextRequest: RequestHandler = (req, res, next) => {
   const model = req.body.model;
   const isClaude4Model =
     model?.includes("claude-sonnet-4") ||
-    model?.includes("claude-opus-4");
+    model?.includes("claude-opus-4") ||
+    model?.includes("claude-haiku-4");
   if (model?.startsWith("claude-3") || isClaude4Model) {
     textToChatPreprocessor(req, res, next);
   } else {
@@ -363,7 +365,8 @@ const preprocessOpenAICompatRequest: RequestHandler = (req, res, next) => {
   const model = req.body.model;
   const isClaude4 =
     model?.includes("claude-sonnet-4") ||
-    model?.includes("claude-opus-4");
+    model?.includes("claude-opus-4") ||
+    model?.includes("claude-haiku-4");
   if (model?.includes("claude-3") || isClaude4) {
     oaiToChatPreprocessor(req, res, next);
   } else {
