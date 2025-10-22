@@ -77,12 +77,55 @@ function transformAwsTextResponseToOpenAI(
   };
 }
 
+// Legacy Claude models that should NOT receive the global. prefix
+const LEGACY_CLAUDE_MODELS = [
+  "anthropic.claude-instant-v1",
+  "anthropic.claude-v2",
+  "anthropic.claude-v2:1",
+  "anthropic.claude-3-sonnet-20240229-v1:0",
+  "anthropic.claude-3-haiku-20240307-v1:0",
+  "anthropic.claude-3-5-haiku-20241022-v1:0",
+  "anthropic.claude-3-opus-20240229-v1:0",
+  "anthropic.claude-3-5-sonnet-20240620-v1:0",
+  "anthropic.claude-3-5-sonnet-20241022-v2:0",
+  "anthropic.claude-3-7-sonnet-20250219-v1:0",
+  "anthropic.claude-sonnet-4-20250514-v1:0",
+  "anthropic.claude-opus-4-20250514-v1:0",
+  "anthropic.claude-opus-4-1-20250805-v1:0",
+];
+
+const addGlobalPrefixForClaude45Models = (manager: ProxyReqManager) => {
+  const req = manager.request;
+  const model = req.body.model;
+
+  // Return early if model already has global. prefix
+  if (model.startsWith('global.')) {
+    return;
+  }
+
+  // Never add global. prefix to Mistral models
+  if (model.startsWith('mistral.')) {
+    return;
+  }
+
+  // Return early if model is in the legacy exclusion list
+  if (LEGACY_CLAUDE_MODELS.includes(model)) {
+    return;
+  }
+
+  // Add global. prefix to all other anthropic.claude models
+  if (model.startsWith('anthropic.claude')) {
+    const newBody = { ...req.body, model: 'global.' + model };
+    manager.setBody(newBody);
+  }
+};
+
 const awsClaudeProxy = createQueuedProxyMiddleware({
   target: ({ signedRequest }) => {
     if (!signedRequest) throw new Error("Must sign request before proxying");
     return `${signedRequest.protocol}//${signedRequest.hostname}`;
   },
-  mutations: [signAwsRequest, finalizeSignedRequest],
+  mutations: [addGlobalPrefixForClaude45Models, signAwsRequest, finalizeSignedRequest],
   blockingResponseHandler: awsBlockingResponseHandler,
 });
 

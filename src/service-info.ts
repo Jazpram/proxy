@@ -168,9 +168,12 @@ type ModelAggregates = {
   awsSonnet3_5?: number;
   awsSonnet3_7?: number;
   awsSonnet4?: number;
+  awsOpus4_1?: number;
   awsOpus3?: number;
   awsOpus4?: number;
-  awsHaiku: number;
+  awsHaiku3?: number;
+  awsHaiku3_5?: number;
+  awsHaiku4_5?: number;
   gcpSonnet?: number;
   gcpSonnet35?: number;
   gcpHaiku?: number;
@@ -575,10 +578,12 @@ function addKeyToAggregates(k: KeyPoolKey) {
             addToFamily(`aws-claude__awsSonnet3_5`, 1);
           } else if (id.includes("claude-3-7-sonnet")) {
             addToFamily(`aws-claude__awsSonnet3_7`, 1);
-          } else if (id.includes("claude-3-haiku") || id.includes("claude-3-5-haiku")) {
-            addToFamily(`aws-claude__awsHaiku`, 1);
           } else if (id.includes("haiku-4-5")) {
-            addToFamily(`aws-claude__awsHaiku`, 1);
+            addToFamily(`aws-claude__awsHaiku4_5`, 1);
+          } else if (id.includes("claude-3-5-haiku")) {
+            addToFamily(`aws-claude__awsHaiku3_5`, 1);
+          } else if (id.includes("claude-3-haiku")) {
+            addToFamily(`aws-claude__awsHaiku3`, 1);
           } else if (id.includes("sonnet-4-5")) {
             addToFamily(`aws-claude__awsSonnet4_5`, 1);
           } else if (id.includes("sonnet-4")) {
@@ -586,6 +591,9 @@ function addKeyToAggregates(k: KeyPoolKey) {
           } else if (id.includes("claude-3-opus")) {
             addToFamily(`aws-claude__awsOpus3`, 1);
             addToFamily(`aws-claude-opus__awsOpus3`, 1);
+          } else if (id.includes("opus-4-1")) {
+            addToFamily(`aws-claude__awsOpus4_1`, 1);
+            addToFamily(`aws-claude-opus__awsOpus4_1`, 1);
           } else if (id.includes("opus-4")) {
             addToFamily(`aws-claude__awsOpus4`, 1);
             addToFamily(`aws-claude-opus__awsOpus4`, 1);
@@ -800,13 +808,15 @@ function getInfoForFamily(family: ModelFamily): BaseFamilyInfo {
           // Original behavior: get logged count from the same family
           const logged = familyStats.get(`${family}__awsLogged`) || 0;
           const variants = new Set<string>();
-          if (familyStats.get(`${family}__awsClaude2`) || 0) variants.add("claude2");
+          if (familyStats.get(`${family}__awsHaiku3`) || 0) variants.add("haiku3");
+          if (familyStats.get(`${family}__awsHaiku3_5`) || 0) variants.add("haiku3.5");
+          if (familyStats.get(`${family}__awsHaiku4_5`) || 0) variants.add("haiku4.5");
           if (familyStats.get(`${family}__awsSonnet3`) || 0) variants.add("sonnet3");
           if (familyStats.get(`${family}__awsSonnet3_5`) || 0) variants.add("sonnet3.5");
           if (familyStats.get(`${family}__awsSonnet3_7`) || 0) variants.add("sonnet3.7");
-          if (familyStats.get(`${family}__awsHaiku`) || 0) variants.add("haiku");
           if (familyStats.get(`${family}__awsSonnet4`) || 0) variants.add("sonnet4");
           if (familyStats.get(`${family}__awsSonnet4_5`) || 0) variants.add("sonnet4.5");
+          if (familyStats.get(`${family}__awsClaude2`) || 0) variants.add("claude2");
           
           info.enabledVariants = variants.size ? Array.from(variants).join(",") : undefined;
 
@@ -821,6 +831,7 @@ function getInfoForFamily(family: ModelFamily): BaseFamilyInfo {
           const variants = new Set<string>();
           if (familyStats.get(`${family}__awsOpus3`) || 0) variants.add("opus3");
           if (familyStats.get(`${family}__awsOpus4`) || 0) variants.add("opus4");
+          if (familyStats.get(`${family}__awsOpus4_1`) || 0) variants.add("opus4.1");
 
           info.enabledVariants = variants.size ? Array.from(variants).join(",") : undefined;
 
