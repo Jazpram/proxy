@@ -320,6 +320,9 @@ const handleUpstreamErrors: ProxyResHandlerWithBody = async (
           errorPayload.proxy_note = `Assigned API key is invalid or revoked, please try again.`;
         }
         return;
+      case "google-ai":
+        await handleGoogleAI403Error(req, errorPayload);
+        break;
       case "aws":
         switch (errorType) {
           case "UnrecognizedClientException":
@@ -986,6 +989,44 @@ async function handleGoogleAIRateLimitError(
       errorPayload.proxy_note = `Unrecognized rate limit error from Google AI (${status}). Please report this.`;
       break;
   }
+}
+
+async function handleGoogleAI403Error(
+  req: Request,
+  errorPayload: ProxiedErrorPayload
+) {
+  const error = errorPayload.error || {};
+  const message = error.message || "";
+  const text = JSON.stringify(error);
+
+  // Pattern match for leaked/compromised key messages
+  const leakedKeyMsgs = [
+    /leaked/i,
+    /reported as leaked/i,
+    /compromised/i,
+  ];
+
+  // Check if this is a leaked key error
+  const isLeakedKey = leakedKeyMsgs.some((msg) => msg.test(text) || msg.test(message));
+  
+  if (isLeakedKey) {
+    req.log.warn(
+      { key: req.key?.hash, error: text },
+      "Google AI key has been reported as leaked and will be disabled."
+    );
+    keyPool.disable(req.key!, "revoked");
+    await reenqueueRequest(req);
+    throw new RetryableError("Google AI key leaked/compromised, retrying with different key.");
+  }
+
+  // For other 403 errors, also disable and retry
+  req.log.warn(
+    { key: req.key?.hash, error: text },
+    "Google AI key returned 403 error and will be disabled."
+  );
+  keyPool.disable(req.key!, "revoked");
+  await reenqueueRequest(req);
+  throw new RetryableError("Google AI key invalid (403 error), retrying with different key.");
 }
 
 async function handleQwenBadRequestError(
