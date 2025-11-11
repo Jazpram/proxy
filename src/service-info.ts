@@ -159,6 +159,7 @@ type ModelAggregates = {
   trial?: number;
   revoked?: number;
   overQuota?: number;
+  rateLimited?: number;
   pozzed?: number;
   awsLogged?: number;
   awsSonnet4_5?: number;
@@ -181,8 +182,8 @@ type ModelAggregates = {
   inputTokens: number; // Changed from tokens
   outputTokens: number; // Added
   legacyTokens?: number; // Added for migrated totals
-  paidKeys?: number; 
-  freeActiveKeys?: number; 
+  paidKeys?: number;
+  freeActiveKeys?: number;
 };
 /** All possible combinations of model family and aggregate type. */
 type ModelAggregateKey = `${ModelFamily}__${keyof ModelAggregates}`;
