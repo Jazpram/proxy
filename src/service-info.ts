@@ -126,9 +126,17 @@ const MODEL_FAMILY_ORDER: ModelFamily[] = [
   "cohere",
   "qwen",
   "glm",
-  "openrouter-paid", 
-  "openrouter-free", 
-  "moonshot"
+  "openrouter-paid",
+  "openrouter-free",
+  "moonshot",
+  // Groq models
+  "groq-llama-8b",
+  "groq-llama-70b",
+  "groq-llama-4-17b",
+  "groq-gpt-oss-120b",
+  "groq-gpt-oss-20b",
+  "groq-kimi",
+  "groq-qwen-32b"
 ];
 
 type KeyPoolKey = ReturnType<typeof keyPool.list>[0];
@@ -152,6 +160,8 @@ const keyIsMoonshotKey = (k: KeyPoolKey): k is MoonshotKey =>
   k.service === "moonshot";
 const keyIsOpenRouterKey = (k: KeyPoolKey): k is OpenRouterKey =>
   k.service === "openrouter";
+const keyIsGroqKey = (k: KeyPoolKey): k is GroqKey =>
+  k.service === "groq";
 
 /** Stats aggregated across all keys for a given service. */
 type ServiceAggregate = "keys" | "uncheckedKeys" | "orgs";
@@ -751,6 +761,7 @@ function addKeyToAggregates(k: KeyPoolKey) {
       });
       break;
     case "groq":
+      if (!keyIsGroqKey(k)) throw new Error("Invalid key type");
       k.modelFamilies.forEach(f => {
         incrementGenericFamilyStats(f);
         addToFamily(`${f}__active`, k.isDisabled ? 0 : 1);
