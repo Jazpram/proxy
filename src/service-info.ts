@@ -747,6 +747,12 @@ function addKeyToAggregates(k: KeyPoolKey) {
         }
       });
       break;
+    case "groq":
+      k.modelFamilies.forEach(f => {
+        incrementGenericFamilyStats(f);
+        addToFamily(`${f}__active`, k.isDisabled ? 0 : 1);
+      });
+      break;
     default:
       assertNever(k.service);
   }
