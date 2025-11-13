@@ -17,6 +17,7 @@ import { openrouter } from "./openrouter";
 import { qwen } from "./qwen";
 import { glm } from "./glm";
 import { moonshot } from "./moonshot";
+import { groq } from "./groq";
 import { sendErrorToClient } from "./middleware/response/error-generator";
 
 const proxyRouter = express.Router();
@@ -63,6 +64,7 @@ proxyRouter.use("/qwen", addV1, qwen);
 proxyRouter.use("/glm", addV1, glm);
 proxyRouter.use("/moonshot", addV1, moonshot);
 proxyRouter.use("/openrouter", openrouter);
+proxyRouter.use("/groq", addV1, groq);
 
 // Redirect browser requests to the homepage.
 proxyRouter.get("*", (req, res, next) => {

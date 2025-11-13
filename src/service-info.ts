@@ -159,7 +159,6 @@ type ModelAggregates = {
   trial?: number;
   revoked?: number;
   overQuota?: number;
-  rateLimited?: number;
   pozzed?: number;
   awsLogged?: number;
   awsSonnet4_5?: number;
@@ -182,8 +181,8 @@ type ModelAggregates = {
   inputTokens: number; // Changed from tokens
   outputTokens: number; // Added
   legacyTokens?: number; // Added for migrated totals
-  paidKeys?: number;
-  freeActiveKeys?: number;
+  paidKeys?: number; 
+  freeActiveKeys?: number; 
 };
 /** All possible combinations of model family and aggregate type. */
 type ModelAggregateKey = `${ModelFamily}__${keyof ModelAggregates}`;
@@ -210,7 +209,6 @@ type BaseFamilyInfo = {
   usage?: string;
   activeKeys: number;
   revokedKeys?: number;
-  rateLimitedKeys?: number;
   proomptersInQueue?: number;
   estimatedQueueTime?: string;
   Requests?: number; // <--- ADDED
@@ -658,16 +656,13 @@ function addKeyToAggregates(k: KeyPoolKey) {
     case "google-ai":
       // Cast to GoogleAIKey to access GoogleAI-specific properties
       const googleKey = k as unknown as { overQuotaFamilies?: string[] };
-
+      
       // First handle general stats for all model families
       k.modelFamilies.forEach((f) => {
         incrementGenericFamilyStats(f);
-        // Active keys should exclude disabled and rate limited keys
-        const isActive = !k.isDisabled && Date.now() >= k.rateLimitedUntil;
-        addToFamily(`${f}__active`, isActive ? 1 : 0);
-        addToFamily(`${f}__rateLimited`, Date.now() < k.rateLimitedUntil ? 1 : 0);
+        addToFamily(`${f}__active`, k.isDisabled ? 0 : 1);
       });
-
+      
       // Create a set of model families that are over quota for this key
       let overQuotaModelFamilies = new Set<string>();
       
@@ -866,7 +861,6 @@ function getInfoForFamily(family: ModelFamily): BaseFamilyInfo {
         break;
       case "google-ai":
         info.overQuotaKeys = familyStats.get(`${family}__overQuota`) || 0;
-        info.rateLimitedKeys = familyStats.get(`${family}__rateLimited`) || 0;
         break;
       case "qwen":
         info.overQuotaKeys = familyStats.get(`${family}__overQuota`) || 0;

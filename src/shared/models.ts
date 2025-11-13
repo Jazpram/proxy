@@ -21,7 +21,8 @@ export type LLMService =
   | "qwen"
   | "openrouter"
   | "glm"
-  | "moonshot";
+  | "moonshot"
+  | "groq";
 
 export type OpenAIModelFamily =
   | "turbo"
@@ -69,6 +70,7 @@ export type QwenModelFamily = "qwen";
 export type GlmModelFamily = "glm";
 export type MoonshotModelFamily = "moonshot";
 export type OpenRouterModuleFamily = "openrouter-paid" | "openrouter-free";
+export type GroqModelFamily = "groq";
 
 export type ModelFamily =
   | OpenAIModelFamily
@@ -84,7 +86,8 @@ export type ModelFamily =
   | QwenModelFamily
   | GlmModelFamily
   | OpenRouterModuleFamily
-  | MoonshotModelFamily;
+  | MoonshotModelFamily
+  | GroqModelFamily;
 
 export const MODEL_FAMILIES = (<A extends readonly ModelFamily[]>(
   arr: A & ([ModelFamily] extends [A[number]] ? unknown : never)
@@ -162,6 +165,7 @@ export const MODEL_FAMILIES = (<A extends readonly ModelFamily[]>(
   "azure-gpt-image",
   "openrouter-paid", // <--- ADDED
   "openrouter-free", // <--- ADDED
+  "groq", // <--- ADDED
 ] as const);
 
 export const LLM_SERVICES = (<A extends readonly LLMService[]>(
@@ -180,7 +184,8 @@ export const LLM_SERVICES = (<A extends readonly LLMService[]>(
   "qwen",
   "openrouter",
   "glm",
-  "moonshot"
+  "moonshot",
+  "groq"
 ] as const);
 
 export const MODEL_FAMILY_SERVICE: {
@@ -259,6 +264,7 @@ export const MODEL_FAMILY_SERVICE: {
   "mistral-large": "mistral-ai",
   "openrouter-paid": "openrouter", // <--- ADDED
   "openrouter-free": "openrouter", // <--- ADDED
+  "groq": "groq", // <--- ADDED
 };
 
 const FREE_OPENROUTER_MODELS = [
@@ -478,6 +484,8 @@ export function getModelFamilyForRequest(req: Request): ModelFamily {
     modelFamily = getOpenRouterModuleFamily(model);
   } else if (req.service === "glm") {
     modelFamily = "glm";
+  } else if (req.service === "groq") {
+    modelFamily = "groq";
   } else {
     switch (req.outboundApi) {
       case "anthropic-chat":
