@@ -273,6 +273,9 @@ const handleUpstreamErrors: ProxyResHandlerWithBody = async (
       case "moonshot":
         errorPayload.proxy_note = `The Moonshot API rejected the request. Check the error message for details.`;
         break;
+      case "groq":
+        errorPayload.proxy_note = `The Groq API rejected the request. Check the error message for details.`;
+        break;
       case "openrouter":
         await handleOpenRouterError(req, errorPayload);
         break;

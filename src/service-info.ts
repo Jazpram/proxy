@@ -35,6 +35,7 @@ import {
   GlmModelFamily,
   MoonshotModelFamily,
   OpenRouterModuleFamily,
+  GroqModelFamily,
 } from "./shared/models";
 import { getCostSuffix, getTokenCostUsd, prettyTokens } from "./shared/stats";
 import { getUniqueIps } from "./proxy/rate-limit";
@@ -247,6 +248,7 @@ export type ServiceInfo = {
     "openai-image"?: string;
     "azure-image"?: string;
     "openrouter"?: string;
+    "groq"?: string;
   };
   proompts?: number;
   tookens?: string;
@@ -267,7 +269,8 @@ export type ServiceInfo = {
   & { [f in QwenModelFamily]?: BaseFamilyInfo }
   & { [f in GlmModelFamily]?: BaseFamilyInfo }
   & { [f in MoonshotModelFamily]?: BaseFamilyInfo }
-  & { [f in OpenRouterModuleFamily]?: OpenRouterInfo };
+  & { [f in OpenRouterModuleFamily]?: OpenRouterInfo }
+  & { [f in GroqModelFamily]?: BaseFamilyInfo };
 
 
 // https://stackoverflow.com/a/66661477
