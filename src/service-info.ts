@@ -256,6 +256,7 @@ export type ServiceInfo = {
   proomptersNow?: number;
   status?: string;
   openrouterTotalBalance?: string; // <--- ADDED HERE
+  groq?: BaseFamilyInfo; // <--- ADDED FOR GROQ AGGREGATION
   config: ReturnType<typeof listConfig>;
 } & { [f in OpenAIModelFamily]?: OpenAIInfo }
   & { [f in AnthropicModelFamily]?: AnthropicInfo; }
@@ -472,6 +473,13 @@ function getServiceModelStats(accessibleFamilies: Set<ModelFamily>) {
       modelFamilyInfo[family] = getInfoForFamily(family);
     }
   }
+
+  // Add aggregated GROQ stats if any GROQ keys exist
+  const groqKeys = keyPool.list().filter(k => k.service === "groq");
+  if (groqKeys.length > 0) {
+    modelFamilyInfo["groq" as any] = getInfoForFamily("groq" as any);
+  }
+
   return { serviceInfo, modelFamilyInfo };
 }
 
@@ -752,7 +760,10 @@ function addKeyToAggregates(k: KeyPoolKey) {
     case "groq":
       k.modelFamilies.forEach(f => {
         incrementGenericFamilyStats(f);
-        addToFamily(`${f}__active`, k.isDisabled ? 0 : 1);
+        // Aggregate GROQ stats under single 'groq' key
+        addToFamily(`groq__active`, k.isDisabled ? 0 : 1);
+        addToFamily(`groq__revoked`, k.isRevoked ? 1 : 0);
+        addToFamily(`groq__usage`, getTokenCostUsd(f, k.tokenUsage?.[f]?.input || 0, k.tokenUsage?.[f]?.output || 0));
       });
       break;
     default:
