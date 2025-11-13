@@ -508,6 +508,7 @@ function addKeyToAggregates(k: KeyPoolKey) {
   addToService("glm__keys", k.service === "glm" ? 1 : 0);
   addToService("moonshot__keys", k.service === "moonshot" ? 1 : 0);
   addToService("openrouter__keys", k.service === "openrouter" ? 1 : 0);
+  addToService("groq__keys", k.service === "groq" ? 1 : 0);
 
   let sumInputTokens = 0;
   let sumOutputTokens = 0;
