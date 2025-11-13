@@ -14,6 +14,7 @@ import {
   GlmKey,
   MoonshotKey,
   OpenRouterKey,
+  GroqKey,
 } from "./shared/key-management";
 import {
   AnthropicModelFamily,

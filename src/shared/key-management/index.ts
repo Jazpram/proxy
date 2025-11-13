@@ -108,3 +108,4 @@ export { QwenKey } from "./qwen/provider";
 export { GlmKey } from "./glm/provider";
 export { MoonshotKey } from "./moonshot/provider";
 export { OpenRouterKey } from "./openrouter/provider"; // <--- ADDED
+export { GroqKey } from "./groq/provider"; // <--- ADDED
