@@ -76,8 +76,16 @@ const MODEL_PRICING: Record<ModelFamily, { input: number; output: number } | und
   "cohere": { input: 0.15, output: 0.60 }, // Updated to Command R
   "qwen": { input: 1.60, output: 6.40 }, // Qwen-max based pricing: $1.6 input, $6.4 output per 1M tokens
   "moonshot": { input: 0.6, output: 2.5 }, // <--- ИСПРАВЛЕНО: Добавлена Moonshot
-  "openrouter-paid": { input: 5.00, output: 20.00 }, 
-  "openrouter-free": { input: 0.00, output: 0.00 }, 
+  "openrouter-paid": { input: 5.00, output: 20.00 },
+  "openrouter-free": { input: 0.00, output: 0.00 },
+  // Groq models with specific pricing
+  "groq-llama-8b": { input: 0.05, output: 0.08 }, // llama-3.1-8b-instant
+  "groq-llama-70b": { input: 0.59, output: 0.79 }, // llama-3.3-70b-versatile
+  "groq-llama-4-17b": { input: 0.155, output: 0.47 }, // Average of llama-4 models
+  "groq-gpt-oss-120b": { input: 0.15, output: 0.60 }, // openai/gpt-oss-120b
+  "groq-gpt-oss-20b": { input: 0.075, output: 0.30 }, // openai/gpt-oss-20b
+  "groq-kimi": { input: 1.00, output: 3.00 }, // moonshotai/kimi-k2-instruct-0905
+  "groq-qwen-32b": { input: 0.29, output: 0.59 }, // qwen/qwen3-32b 
 };
 
 export function getTokenCostDetailsUsd(model: ModelFamily, inputTokens: number, outputTokens?: number): { inputCost: number, outputCost: number, totalCost: number } {

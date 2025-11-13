@@ -70,7 +70,14 @@ export type QwenModelFamily = "qwen";
 export type GlmModelFamily = "glm";
 export type MoonshotModelFamily = "moonshot";
 export type OpenRouterModuleFamily = "openrouter-paid" | "openrouter-free";
-export type GroqModelFamily = "groq";
+export type GroqModelFamily =
+  | "groq-llama-8b"     // llama-3.1-8b-instant: $0.05 input, $0.08 output
+  | "groq-llama-70b"    // llama-3.3-70b-versatile: $0.59 input, $0.79 output
+  | "groq-llama-4-17b"  // llama-4 models: $0.11-$0.20 input, $0.34-$0.60 output
+  | "groq-gpt-oss-120b" // openai/gpt-oss-120b: $0.15 input, $0.60 output
+  | "groq-gpt-oss-20b"  // openai/gpt-oss-20b: $0.075 input, $0.30 output
+  | "groq-kimi"         // moonshotai/kimi-k2-instruct-0905: $1.00 input, $3.00 output
+  | "groq-qwen-32b";    // qwen/qwen3-32b: $0.29 input, $0.59 output
 
 export type ModelFamily =
   | OpenAIModelFamily
@@ -165,7 +172,13 @@ export const MODEL_FAMILIES = (<A extends readonly ModelFamily[]>(
   "azure-gpt-image",
   "openrouter-paid", // <--- ADDED
   "openrouter-free", // <--- ADDED
-  "groq", // <--- ADDED
+  "groq-llama-8b", // <--- ADDED
+  "groq-llama-70b", // <--- ADDED
+  "groq-llama-4-17b", // <--- ADDED
+  "groq-gpt-oss-120b", // <--- ADDED
+  "groq-gpt-oss-20b", // <--- ADDED
+  "groq-kimi", // <--- ADDED
+  "groq-qwen-32b", // <--- ADDED
 ] as const);
 
 export const LLM_SERVICES = (<A extends readonly LLMService[]>(
@@ -264,7 +277,13 @@ export const MODEL_FAMILY_SERVICE: {
   "mistral-large": "mistral-ai",
   "openrouter-paid": "openrouter", // <--- ADDED
   "openrouter-free": "openrouter", // <--- ADDED
-  "groq": "groq", // <--- ADDED
+  "groq-llama-8b": "groq", // <--- ADDED
+  "groq-llama-70b": "groq", // <--- ADDED
+  "groq-llama-4-17b": "groq", // <--- ADDED
+  "groq-gpt-oss-120b": "groq", // <--- ADDED
+  "groq-gpt-oss-20b": "groq", // <--- ADDED
+  "groq-kimi": "groq", // <--- ADDED
+  "groq-qwen-32b": "groq", // <--- ADDED
 };
 
 const FREE_OPENROUTER_MODELS = [
@@ -485,7 +504,7 @@ export function getModelFamilyForRequest(req: Request): ModelFamily {
   } else if (req.service === "glm") {
     modelFamily = "glm";
   } else if (req.service === "groq") {
-    modelFamily = "groq";
+    modelFamily = getGroqModelFamily(model);
   } else {
     switch (req.outboundApi) {
       case "anthropic-chat":
@@ -521,6 +540,34 @@ export function getModelFamilyForRequest(req: Request): ModelFamily {
   }
 
   return (req.modelFamily = modelFamily);
+}
+
+export function getGroqModelFamily(model: string): GroqModelFamily {
+  // Map Groq model IDs to model families based on pricing tiers
+  if (model.includes("llama-3.1-8b") || model === "llama-3.1-8b-instant") {
+    return "groq-llama-8b";
+  }
+  if (model.includes("llama-3.3-70b") || model === "llama-3.3-70b-versatile") {
+    return "groq-llama-70b";
+  }
+  if (model.includes("llama-4-17b") || model.includes("llama-4-maverick") || model.includes("llama-4-scout")) {
+    return "groq-llama-4-17b";
+  }
+  if (model.includes("gpt-oss-120b") || model === "openai/gpt-oss-120b") {
+    return "groq-gpt-oss-120b";
+  }
+  if (model.includes("gpt-oss-20b") || model === "openai/gpt-oss-20b") {
+    return "groq-gpt-oss-20b";
+  }
+  if (model.includes("kimi-k2") || model.includes("kimi-k2-instruct") || model === "moonshotai/kimi-k2-instruct-0905") {
+    return "groq-kimi";
+  }
+  if (model.includes("qwen3-32b") || model === "qwen/qwen3-32b") {
+    return "groq-qwen-32b";
+  }
+
+  // Default to most common/cheapest model for unknown models
+  return "groq-llama-8b";
 }
 
 function assertNever(x: never): never {

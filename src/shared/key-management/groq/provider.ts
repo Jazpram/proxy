@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { createGenericGetLockoutPeriod, Key, KeyProvider } from "..";
 import { config } from "../../../config";
 import { logger } from "../../../logger";
-import { GroqModelFamily } from "../../models";
+import { GroqModelFamily, getGroqModelFamily } from "../../models";
 import { PaymentRequiredError } from "../../errors";
 import { GroqKeyChecker } from "./checker";
 
@@ -75,7 +75,15 @@ export class GroqKeyProvider implements KeyProvider<GroqKey> {
       const newKey: GroqKey = {
         key,
         service: this.service,
-        modelFamilies: ["groq"],
+        modelFamilies: [
+          "groq-llama-8b",
+          "groq-llama-70b",
+          "groq-llama-4-17b",
+          "groq-gpt-oss-120b",
+          "groq-gpt-oss-20b",
+          "groq-kimi",
+          "groq-qwen-32b"
+        ],
         isDisabled: false,
         isRevoked: false,
         isOverQuota: false,
@@ -113,6 +121,8 @@ export class GroqKeyProvider implements KeyProvider<GroqKey> {
   public get(rawModel: string, streaming: boolean = false): GroqKey {
     this.log.debug({ model: rawModel }, "Selecting key");
 
+    const requiredFamily = getGroqModelFamily(rawModel);
+
     const availableKeys = this.keys.filter((k) => {
       // 1. Must not be explicitly disabled
       if (k.isDisabled) return false;
@@ -128,8 +138,8 @@ export class GroqKeyProvider implements KeyProvider<GroqKey> {
       const isRateLimited = now < k.rateLimitedUntil;
       if (isRateLimited) return false;
 
-      // 5. Must support the model family (always true for Groq keys here)
-      return k.modelFamilies.includes("groq");
+      // 5. Must support the model family
+      return k.modelFamilies.includes(requiredFamily);
     });
 
     if (availableKeys.length === 0) {

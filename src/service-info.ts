@@ -331,6 +331,9 @@ const SERVICE_ENDPOINTS: { [s in LLMService]: Record<string, string> } = {
   openrouter: {
     openrouter: `%BASE%/openrouter`,
   },
+  groq: {
+    groq: `%BASE%/groq`,
+  },
 };
 
 const familyStats = new Map<ModelAggregateKey, number>();
