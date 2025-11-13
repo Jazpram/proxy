@@ -73,7 +73,7 @@ type Config = {
   /**
    * Comma-delimited list of Groq API keys.
    */
-  groqKey?: string; // <--- ADDED
+  groqKey?: string;
   /**
    * Comma-delimited list of AWS credentials. Each credential item should be a
    * colon-delimited list of access key, secret key, and AWS region.
@@ -531,7 +531,7 @@ export const config: Config = {
   cohereKey: getEnvWithDefault("COHERE_KEY", ""),
   moonshotKey: getEnvWithDefault("MOONSHOT_KEY", ""),
   openRouterKey: getEnvWithDefault("OPENROUTER_AI_KEY", ""),
-  groqKey: getEnvWithDefault("GROQ_API_KEY", ""),
+  groqKey: getEnvWithDefault("GROQ_KEY", ""),
   awsCredentials: getEnvWithDefault("AWS_CREDENTIALS", ""),
   gcpCredentials: getEnvWithDefault("GCP_CREDENTIALS", ""),
   azureCredentials: getEnvWithDefault("AZURE_CREDENTIALS", ""),

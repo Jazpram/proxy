@@ -143,8 +143,15 @@ export class KeyPool {
 
   /** Increments the request count for a specific model family. */
   public incrementRequestCount(modelFamily: ModelFamily): void {
+    // Increment for the specific model family
     const currentCount = this.modelFamilyRequestCounts.get(modelFamily) || 0;
     this.modelFamilyRequestCounts.set(modelFamily, currentCount + 1);
+
+    // For Groq models, also increment the parent "groq" family for main page display
+    if (modelFamily.toString().startsWith('groq-') && modelFamily !== 'groq') {
+      const parentCount = this.modelFamilyRequestCounts.get('groq') || 0;
+      this.modelFamilyRequestCounts.set('groq', parentCount + 1);
+    }
   }
 
   /** Returns the request count for a specific model family. */
@@ -235,7 +242,7 @@ export class KeyPool {
       return "moonshot";
     } else if (model.includes("openrouter")) {
       return "openrouter";
-    } else if (model.includes("groq")) {
+    } else if (model.includes("groq") || model.includes("llama") || model.includes("mixtral") || model.includes("gemma")) {
       return "groq";
     } else if (model.startsWith("anthropic.claude")) {
       // AWS offers models from a few providers
@@ -279,18 +286,18 @@ export class KeyPool {
     );
     this.recheckJobs.openai = openaiJob;
 
-    // Schedule hourly recheck for Google AI keys to handle quota resets more quickly
-    const googleMinute = offset;
-    const googleCrontab = `${googleMinute} * * * *`; // Run every hour
-    
+    // Schedule daily recheck for Google AI keys (every 24 hours)
+    const googleHour = offset;
+    const googleCrontab = `0 ${googleHour} * * *`; // Run once every day at the specified hour
+
     const googleJob = schedule.scheduleJob(googleCrontab, () => {
       const next = googleJob.nextInvocation();
-      logger.info({ next, service: "google-ai" }, "Performing hourly Google AI key recheck for quota status.");
+      logger.info({ next, service: "google-ai" }, "Performing daily Google AI key recheck for quota status.");
       this.recheck("google-ai");
     });
     logger.info(
       { rule: googleCrontab, next: googleJob.nextInvocation(), service: "google-ai" },
-      "Scheduled hourly Google AI key recheck job"
+      "Scheduled daily Google AI key recheck job"
     );
     this.recheckJobs["google-ai"] = googleJob;
   }

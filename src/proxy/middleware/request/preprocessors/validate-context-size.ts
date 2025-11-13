@@ -160,6 +160,23 @@ export const validateContextSize: RequestPreprocessor = async (req) => {
   } else if (model.match(/^glm/)) {
     // GLM models have 131k context window
     modelMax = 131000;
+  } else if (req.service === "groq") {
+    // Groq models have different context windows:
+    // llama-3.1-8b-instant: 131,072 tokens
+    // llama-3.3-70b-versatile: 131,072 tokens (32,768 max completion)
+    // gpt-oss-120b/gpt-oss-20b: 131,072 tokens
+    // llama-4-maverick/scout: 131,072 tokens
+    // kimi-k2-instruct-0905: 262,144 tokens
+    // Prompt Guard models: 512 tokens
+    if (model.includes("llama-prompt-guard") || model.includes("llama-guard")) {
+      modelMax = 512; // Prompt Guard models have very small context
+    } else if (model.includes("kimi-k2-instruct-0905")) {
+      modelMax = 262144; // 262k context window
+    } else if (model.includes("llama-3.3-70b-versatile")) {
+      modelMax = 131072; // 131k context, 32k max completion
+    } else {
+      modelMax = 131072; // Default for most Groq models
+    }
   } else if (model.match(/^grok-4/)) {
     modelMax = 256000;
   } else if (model.match(/^grok-4-fast/)) {

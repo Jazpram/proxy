@@ -14,7 +14,6 @@ import {
   GlmKey,
   MoonshotKey,
   OpenRouterKey,
-  GroqKey,
 } from "./shared/key-management";
 import {
   AnthropicModelFamily,
@@ -129,14 +128,7 @@ const MODEL_FAMILY_ORDER: ModelFamily[] = [
   "openrouter-paid",
   "openrouter-free",
   "moonshot",
-  // Groq models
-  "groq-llama-8b",
-  "groq-llama-70b",
-  "groq-llama-4-17b",
-  "groq-gpt-oss-120b",
-  "groq-gpt-oss-20b",
-  "groq-kimi",
-  "groq-qwen-32b"
+  "groq"
 ];
 
 type KeyPoolKey = ReturnType<typeof keyPool.list>[0];
@@ -160,8 +152,6 @@ const keyIsMoonshotKey = (k: KeyPoolKey): k is MoonshotKey =>
   k.service === "moonshot";
 const keyIsOpenRouterKey = (k: KeyPoolKey): k is OpenRouterKey =>
   k.service === "openrouter";
-const keyIsGroqKey = (k: KeyPoolKey): k is GroqKey =>
-  k.service === "groq";
 
 /** Stats aggregated across all keys for a given service. */
 type ServiceAggregate = "keys" | "uncheckedKeys" | "orgs";
@@ -482,7 +472,6 @@ function getServiceModelStats(accessibleFamilies: Set<ModelFamily>) {
       modelFamilyInfo[family] = getInfoForFamily(family);
     }
   }
-
   return { serviceInfo, modelFamilyInfo };
 }
 
@@ -761,11 +750,10 @@ function addKeyToAggregates(k: KeyPoolKey) {
       });
       break;
     case "groq":
-      if (!keyIsGroqKey(k)) throw new Error("Invalid key type");
-      k.modelFamilies.forEach(f => {
-        incrementGenericFamilyStats(f);
-        addToFamily(`${f}__active`, k.isDisabled ? 0 : 1);
-      });
+      if (!('isOverQuota' in k)) throw new Error("Invalid key type for groq");
+      incrementGenericFamilyStats("groq");
+      addToFamily(`groq__active`, k.isDisabled ? 0 : 1);
+      addToFamily(`groq__overQuota`, (k as any).isOverQuota ? 1 : 0);
       break;
     default:
       assertNever(k.service);
@@ -901,7 +889,7 @@ function getInfoForFamily(family: ModelFamily): BaseFamilyInfo {
         info.overQuotaKeys = familyStats.get(`${family}__overQuota`) || 0;
         if (family === 'openrouter-paid') {
           info.paidKeys = familyStats.get(`${family}__paidKeys`) || 0;
-          
+
           // Отображаем суммарный баланс только в paid-секции для ясности
           const totalBalance = serviceStats.get("openRouterTotalBalance") || 0;
           if (totalBalance > 0) {
@@ -910,6 +898,9 @@ function getInfoForFamily(family: ModelFamily): BaseFamilyInfo {
         } else if (family === 'openrouter-free') {
           info.freeActiveKeys = familyStats.get(`${family}__freeActiveKeys`) || 0;
         }
+        break;
+      case "groq":
+        info.overQuotaKeys = familyStats.get(`${family}__overQuota`) || 0;
         break;
     }
   }

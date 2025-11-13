@@ -46,7 +46,7 @@ const getModelsResponse = async () => {
     }
 
     // Fetch models from GLM API with authorization
-    const response = await axios.get("https://open.bigmodel.cn/api/paas/v4/models", {
+    const response = await axios.get("https://api.z.ai/api/paas/v4/models", {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${glmKey.key}`
@@ -232,7 +232,7 @@ const rewritePathForGlm: ProxyReqMutator = (manager) => {
 
 const glmProxy = createQueuedProxyMiddleware({
   mutations: [addKey, rewritePathForGlm, finalizeBody],
-  target: "https://open.bigmodel.cn/api/paas",
+  target: "https://api.z.ai/api/paas",
   blockingResponseHandler: glmResponseHandler,
 });
 

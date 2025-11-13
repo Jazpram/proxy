@@ -1,58 +1,14 @@
-// src/shared/key-management/groq/provider.ts
-
-import crypto from "crypto";
-import { createGenericGetLockoutPeriod, Key, KeyProvider } from "..";
+import { Key, KeyProvider, createGenericGetLockoutPeriod } from "..";
+import { GroqKeyChecker } from "./checker";
 import { config } from "../../../config";
 import { logger } from "../../../logger";
-import { GroqModelFamily, getGroqModelFamily } from "../../models";
-import { PaymentRequiredError } from "../../errors";
-import { GroqKeyChecker } from "./checker";
-
-export type GroqKeyUpdate = Omit<
-  Partial<GroqKey>,
-  | "key"
-  | "hash"
-  | "lastUsed"
-  | "promptCount"
-  | "rateLimitedAt"
-  | "rateLimitedUntil"
->;
-
-export type GroqKeyStatus =
-  | 'ACTIVE'
-  | 'RATE_LIMITED'
-  | 'INVALID'
-  | 'DEAD'
-  | 'UNKNOWN';
+import { GroqModelFamily, ModelFamily } from "../../models";
 
 export interface GroqKey extends Key {
   readonly service: "groq";
   readonly modelFamilies: GroqModelFamily[];
-
-  /** Current status of the key */
-  status: GroqKeyStatus;
-  /** Additional info from the checker (e.g., rate limit info) */
-  info: string;
-  /** Whether the key is over its quota/limit */
   isOverQuota: boolean;
-  /** Rate limit information from the API */
-  rateLimitInfo?: {
-    rpm: number;
-    tpm: number;
-    rpd?: number;
-    tpd?: number;
-  };
 }
-
-const STATUS_PRIORITY: { [status in GroqKeyStatus]: number } = {
-  'ACTIVE': 5,
-  'RATE_LIMITED': 2,
-  'UNKNOWN': 1,
-  'INVALID': 0,
-  'DEAD': 0,
-};
-
-const RATE_LIMIT_LOCKOUT = 60000; // 1 minute lockout for rate limits
 
 export class GroqKeyProvider implements KeyProvider<GroqKey> {
   readonly service = "groq";
@@ -64,132 +20,79 @@ export class GroqKeyProvider implements KeyProvider<GroqKey> {
   constructor() {
     const keyConfig = config.groqKey?.trim();
     if (!keyConfig) {
-      this.log.warn(
-        "GROQ_KEY is not set. Groq API will not be available."
-      );
+      this.log.warn("GROQ_KEY is not set. Groq API will not be available.");
       return;
     }
 
-    const bareKeys = [...new Set(keyConfig.split(",").map((k) => k.trim()))];
-    for (const key of bareKeys) {
-      const newKey: GroqKey = {
+    const keys = keyConfig.split(",").map((k: string) => k.trim());
+    for (const key of keys) {
+      if (!key) continue;
+      this.keys.push({
         key,
         service: this.service,
-        modelFamilies: [
-          "groq-llama-8b",
-          "groq-llama-70b",
-          "groq-llama-4-17b",
-          "groq-gpt-oss-120b",
-          "groq-gpt-oss-20b",
-          "groq-kimi",
-          "groq-qwen-32b"
-        ],
+        modelFamilies: ["groq"], // Only parent family to avoid duplicate key checks
         isDisabled: false,
         isRevoked: false,
-        isOverQuota: false,
         promptCount: 0,
         lastUsed: 0,
+        lastChecked: 0,
+        hash: this.hashKey(key),
         rateLimitedAt: 0,
         rateLimitedUntil: 0,
-        hash: `groq-${crypto
-          .createHash("sha256")
-          .update(key)
-          .digest("hex")
-          .slice(0, 8)}`,
-        lastChecked: 0,
         tokenUsage: {},
-        status: 'UNKNOWN',
-        info: 'Key not yet checked',
-        rateLimitInfo: undefined,
-      };
-      this.keys.push(newKey);
+        isOverQuota: false,
+      });
     }
-    this.log.info({ keyCount: this.keys.length }, "Loaded Groq keys.");
+  }
+
+  private hashKey(key: string): string {
+    return require("crypto").createHash("sha256").update(key).digest("hex");
   }
 
   public init() {
-    if (config.checkKeys) {
-      this.checker = new GroqKeyChecker(this.keys, this.update.bind(this));
-      this.checker.start();
+    if (this.keys.length === 0) return;
+    if (!config.checkKeys) {
+      this.log.warn(
+        "Key checking is disabled. Keys will not be verified."
+      );
+      return;
+    }
+    this.checker = new GroqKeyChecker(this.update.bind(this));
+    for (const key of this.keys) {
+      void this.checker.checkKey(key);
     }
   }
 
-  public list() {
-    return this.keys.map((k) => Object.freeze({ ...k, key: undefined }));
-  }
-
-  public get(rawModel: string, streaming: boolean = false): GroqKey {
-    this.log.debug({ model: rawModel }, "Selecting key");
-
-    const requiredFamily = getGroqModelFamily(rawModel);
-
-    const availableKeys = this.keys.filter((k) => {
-      // 1. Must not be explicitly disabled
-      if (k.isDisabled) return false;
-
-      // 2. Must have a valid status
-      if (STATUS_PRIORITY[k.status] === 0) return false;
-
-      // 3. Must not be over quota
-      if (k.isOverQuota) return false;
-
-      // 4. Must not be rate limit locked
-      const now = Date.now();
-      const isRateLimited = now < k.rateLimitedUntil;
-      if (isRateLimited) return false;
-
-      // 5. Must support the model family
-      return k.modelFamilies.includes(requiredFamily);
-    });
-
+  public get(model: string): GroqKey {
+    const availableKeys = this.keys.filter((k) => !k.isDisabled);
     if (availableKeys.length === 0) {
-      throw new PaymentRequiredError("No active Groq keys available.");
+      throw new Error("No Groq keys available");
     }
-
-    const keysByPriority = availableKeys.sort((a, b) => {
-      // Priority 1: Status (higher is better)
-      const aPriority = STATUS_PRIORITY[a.status];
-      const bPriority = STATUS_PRIORITY[b.status];
-      if (aPriority !== bPriority) return bPriority - aPriority;
-
-      // Priority 2: Last Used (lower is better - LRU)
-      return a.lastUsed - b.lastUsed;
-    });
-
-    const selectedKey = keysByPriority[0];
-    selectedKey.lastUsed = Date.now();
-    return { ...selectedKey };
+    const key = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+    key.lastUsed = Date.now();
+    this.throttle(key.hash);
+    return { ...key };
   }
 
-  public disable(key: GroqKey) {
-    const keyFromPool = this.keys.find((k) => k.hash === key.hash);
-    if (!keyFromPool || keyFromPool.isDisabled) return;
-    keyFromPool.isDisabled = true;
-    this.log.warn({ key: key.hash }, "Key disabled");
+  public list(): Omit<GroqKey, "key">[] {
+    return this.keys.map(({ key, ...rest }) => rest);
   }
 
-  public update(hash: string, update: Partial<GroqKey>) {
-    const keyFromPool = this.keys.find((k) => k.hash === hash)!;
-
-    if (update.status) {
-      const isOverQuota = update.status === 'RATE_LIMITED' || update.status === 'INVALID';
-
-      update.isOverQuota = isOverQuota;
-
-      if (update.status === 'DEAD' || update.status === 'INVALID') {
-        update.isDisabled = true;
-        update.isRevoked = update.status === 'DEAD';
-      } else if (keyFromPool.status === 'DEAD' || keyFromPool.status === 'INVALID') {
-        // Re-enable key if status is good now
-        update.isDisabled = false;
-        update.isRevoked = false;
-      }
+  public disable(key: GroqKey): void {
+    const found = this.keys.find((k) => k.hash === key.hash);
+    if (found) {
+      found.isDisabled = true;
     }
-
-    Object.assign(keyFromPool, { lastChecked: Date.now(), ...update });
   }
 
-  public available() {
+  public update(hash: string, update: Partial<GroqKey>): void {
+    const key = this.keys.find((k) => k.hash === hash);
+    if (key) {
+      Object.assign(key, update);
+    }
+  }
+
+  public available(): number {
     return this.keys.filter((k) => !k.isDisabled).length;
   }
 
@@ -202,14 +105,33 @@ export class GroqKeyProvider implements KeyProvider<GroqKey> {
     if (!key.tokenUsage) {
       key.tokenUsage = {};
     }
+
     if (!key.tokenUsage[modelFamily]) {
       key.tokenUsage[modelFamily] = { input: 0, output: 0 };
     }
 
-    const currentFamilyUsage = key.tokenUsage[modelFamily]!;
+    // Use "groq" as the parent family for token usage tracking
+    // This ensures token usage is properly counted for the main Groq statistics
+    const parentFamily = "groq";
+    if (!key.tokenUsage[parentFamily]) {
+      key.tokenUsage[parentFamily] = { input: 0, output: 0 };
+    }
+    const currentFamilyUsage = key.tokenUsage[parentFamily];
     currentFamilyUsage.input += usage.input;
     currentFamilyUsage.output += usage.output;
   }
+
+  /**
+   * Upon being rate limited, a key will be locked out for this many milliseconds
+   * while we wait for other concurrent requests to finish.
+   */
+  private static readonly RATE_LIMIT_LOCKOUT = 2000;
+  /**
+   * Upon assigning a key, we will wait this many milliseconds before allowing it
+   * to be used again. This is to prevent the queue from flooding a key with too
+   * many requests while we wait to learn whether previous ones succeeded.
+   */
+  private static readonly KEY_REUSE_DELAY = 500;
 
   getLockoutPeriod = createGenericGetLockoutPeriod(() => this.keys);
 
@@ -218,24 +140,34 @@ export class GroqKeyProvider implements KeyProvider<GroqKey> {
     const key = this.keys.find((k) => k.hash === keyHash)!;
     const now = Date.now();
     key.rateLimitedAt = now;
-    key.rateLimitedUntil = now + RATE_LIMIT_LOCKOUT;
-
-    // Update status to rate limited
-    this.update(keyHash, { status: 'RATE_LIMITED', info: 'Rate limited by proxy' });
+    key.rateLimitedUntil = now + GroqKeyProvider.RATE_LIMIT_LOCKOUT;
   }
 
-  public recheck() {
-    this.keys.forEach((key) => {
+  public recheck(): void {
+    if (!this.checker || !config.checkKeys) return;
+    for (const key of this.keys) {
       this.update(key.hash, {
-        status: 'UNKNOWN',
-        info: 'Recheck scheduled',
         isOverQuota: false,
         isDisabled: false,
-        isRevoked: false,
-        lastChecked: 0,
-        rateLimitInfo: undefined,
+        lastChecked: 0
       });
-    });
-    this.checker?.scheduleNextCheck();
+      void this.checker.checkKey(key);
+    }
+  }
+
+  /**
+   * Applies a short artificial delay to the key upon dequeueing, in order to
+   * prevent it from being immediately assigned to another request before the
+   * current one can be dispatched.
+   **/
+  private throttle(hash: string) {
+    const now = Date.now();
+    const key = this.keys.find((k) => k.hash === hash)!;
+
+    const currentRateLimit = key.rateLimitedUntil;
+    const nextRateLimit = now + GroqKeyProvider.KEY_REUSE_DELAY;
+
+    key.rateLimitedAt = now;
+    key.rateLimitedUntil = Math.max(currentRateLimit, nextRateLimit);
   }
 }

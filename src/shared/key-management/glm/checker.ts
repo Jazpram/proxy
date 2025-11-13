@@ -119,7 +119,7 @@ export class GlmKeyChecker {
     const timeout = setTimeout(() => controller.abort(), CHECK_TIMEOUT);
 
     try {
-      const response = await fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
+      const response = await fetch("https://api.z.ai/api/paas/v4/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

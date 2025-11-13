@@ -76,16 +76,26 @@ const MODEL_PRICING: Record<ModelFamily, { input: number; output: number } | und
   "cohere": { input: 0.15, output: 0.60 }, // Updated to Command R
   "qwen": { input: 1.60, output: 6.40 }, // Qwen-max based pricing: $1.6 input, $6.4 output per 1M tokens
   "moonshot": { input: 0.6, output: 2.5 }, // <--- ИСПРАВЛЕНО: Добавлена Moonshot
+  "groq": { input: 0.20, output: 0.80 }, // Default Groq pricing (for backward compatibility)
+  // Groq model pricing based on provided data
+  "groq-allam-2-7b": { input: 0.10, output: 0.10 }, // Estimated pricing for Allam 2B model
+  "groq-compound": { input: 0.15, output: 0.15 }, // Estimated pricing for Groq Compound model
+  "groq-compound-mini": { input: 0.08, output: 0.08 }, // Estimated pricing for Compound Mini
+  "groq-llama-4-maverick-17b-128e-instruct": { input: 0.20, output: 0.60 }, // Meta Llama 4 Maverick 17B
+  "groq-llama-4-scout-17b-16e-instruct": { input: 0.11, output: 0.34 }, // Meta Llama 4 Scout 17B
+  "groq-llama-guard-4-12b": { input: 0.20, output: 0.20 }, // Meta Llama Guard 4 12B
+  "groq-llama-prompt-guard-2-22m": { input: 0.03, output: 0.03 }, // Meta Llama Prompt Guard 2 22M
+  "groq-llama-prompt-guard-2-86m": { input: 0.04, output: 0.04 }, // Meta Llama Prompt Guard 2 86M
+  "groq-llama-3.3-70b-versatile": { input: 0.59, output: 0.79 }, // Meta Llama 3.3 70B
+  "groq-llama-3.1-8b-instant": { input: 0.05, output: 0.08 }, // Meta Llama 3.1 8B
+  "groq-kimi-k2-instruct": { input: 0.50, output: 0.50 }, // Estimated pricing for Kimi K2
+  "groq-kimi-k2-instruct-0905": { input: 1.00, output: 3.00 }, // Moonshot AI Kimi K2 0905
+  "groq-gpt-oss-safeguard-20b": { input: 0.075, output: 0.30 }, // OpenAI Safety GPT OSS 20B
+  "groq-gpt-oss-120b": { input: 0.15, output: 0.60 }, // OpenAI GPT OSS 120B
+  "groq-gpt-oss-20b": { input: 0.075, output: 0.30 }, // OpenAI GPT OSS 20B
+  "groq-qwen3-32b": { input: 0.29, output: 0.59 }, // Alibaba Cloud Qwen3-32B
   "openrouter-paid": { input: 5.00, output: 20.00 },
-  "openrouter-free": { input: 0.00, output: 0.00 },
-  // Groq models with specific pricing
-  "groq-llama-8b": { input: 0.05, output: 0.08 }, // llama-3.1-8b-instant
-  "groq-llama-70b": { input: 0.59, output: 0.79 }, // llama-3.3-70b-versatile
-  "groq-llama-4-17b": { input: 0.155, output: 0.47 }, // Average of llama-4 models
-  "groq-gpt-oss-120b": { input: 0.15, output: 0.60 }, // openai/gpt-oss-120b
-  "groq-gpt-oss-20b": { input: 0.075, output: 0.30 }, // openai/gpt-oss-20b
-  "groq-kimi": { input: 1.00, output: 3.00 }, // moonshotai/kimi-k2-instruct-0905
-  "groq-qwen-32b": { input: 0.29, output: 0.59 }, // qwen/qwen3-32b 
+  "openrouter-free": { input: 0.00, output: 0.00 }, 
 };
 
 export function getTokenCostDetailsUsd(model: ModelFamily, inputTokens: number, outputTokens?: number): { inputCost: number, outputCost: number, totalCost: number } {

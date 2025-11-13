@@ -71,13 +71,23 @@ export type GlmModelFamily = "glm";
 export type MoonshotModelFamily = "moonshot";
 export type OpenRouterModuleFamily = "openrouter-paid" | "openrouter-free";
 export type GroqModelFamily =
-  | "groq-llama-8b"     // llama-3.1-8b-instant: $0.05 input, $0.08 output
-  | "groq-llama-70b"    // llama-3.3-70b-versatile: $0.59 input, $0.79 output
-  | "groq-llama-4-17b"  // llama-4 models: $0.11-$0.20 input, $0.34-$0.60 output
-  | "groq-gpt-oss-120b" // openai/gpt-oss-120b: $0.15 input, $0.60 output
-  | "groq-gpt-oss-20b"  // openai/gpt-oss-20b: $0.075 input, $0.30 output
-  | "groq-kimi"         // moonshotai/kimi-k2-instruct-0905: $1.00 input, $3.00 output
-  | "groq-qwen-32b";    // qwen/qwen3-32b: $0.29 input, $0.59 output
+  | "groq"
+  | "groq-allam-2-7b"
+  | "groq-compound"
+  | "groq-compound-mini"
+  | "groq-llama-4-maverick-17b-128e-instruct"
+  | "groq-llama-4-scout-17b-16e-instruct"
+  | "groq-llama-guard-4-12b"
+  | "groq-llama-prompt-guard-2-22m"
+  | "groq-llama-prompt-guard-2-86m"
+  | "groq-llama-3.3-70b-versatile"
+  | "groq-llama-3.1-8b-instant"
+  | "groq-kimi-k2-instruct"
+  | "groq-kimi-k2-instruct-0905"
+  | "groq-gpt-oss-safeguard-20b"
+  | "groq-gpt-oss-120b"
+  | "groq-gpt-oss-20b"
+  | "groq-qwen3-32b";
 
 export type ModelFamily =
   | OpenAIModelFamily
@@ -105,6 +115,7 @@ export const MODEL_FAMILIES = (<A extends readonly ModelFamily[]>(
   "cohere",
   "xai",
   "deepseek",
+  "groq",
   "turbo",
   "gpt4",
   "gpt4-32k",
@@ -172,13 +183,23 @@ export const MODEL_FAMILIES = (<A extends readonly ModelFamily[]>(
   "azure-gpt-image",
   "openrouter-paid", // <--- ADDED
   "openrouter-free", // <--- ADDED
-  "groq-llama-8b", // <--- ADDED
-  "groq-llama-70b", // <--- ADDED
-  "groq-llama-4-17b", // <--- ADDED
-  "groq-gpt-oss-120b", // <--- ADDED
-  "groq-gpt-oss-20b", // <--- ADDED
-  "groq-kimi", // <--- ADDED
-  "groq-qwen-32b", // <--- ADDED
+  "groq",
+  "groq-allam-2-7b",
+  "groq-compound",
+  "groq-compound-mini",
+  "groq-llama-4-maverick-17b-128e-instruct",
+  "groq-llama-4-scout-17b-16e-instruct",
+  "groq-llama-guard-4-12b",
+  "groq-llama-prompt-guard-2-22m",
+  "groq-llama-prompt-guard-2-86m",
+  "groq-llama-3.3-70b-versatile",
+  "groq-llama-3.1-8b-instant",
+  "groq-kimi-k2-instruct",
+  "groq-kimi-k2-instruct-0905",
+  "groq-gpt-oss-safeguard-20b",
+  "groq-gpt-oss-120b",
+  "groq-gpt-oss-20b",
+  "groq-qwen3-32b",
 ] as const);
 
 export const LLM_SERVICES = (<A extends readonly LLMService[]>(
@@ -277,13 +298,23 @@ export const MODEL_FAMILY_SERVICE: {
   "mistral-large": "mistral-ai",
   "openrouter-paid": "openrouter", // <--- ADDED
   "openrouter-free": "openrouter", // <--- ADDED
-  "groq-llama-8b": "groq", // <--- ADDED
-  "groq-llama-70b": "groq", // <--- ADDED
-  "groq-llama-4-17b": "groq", // <--- ADDED
-  "groq-gpt-oss-120b": "groq", // <--- ADDED
-  "groq-gpt-oss-20b": "groq", // <--- ADDED
-  "groq-kimi": "groq", // <--- ADDED
-  "groq-qwen-32b": "groq", // <--- ADDED
+  groq: "groq",
+  "groq-allam-2-7b": "groq",
+  "groq-compound": "groq",
+  "groq-compound-mini": "groq",
+  "groq-llama-4-maverick-17b-128e-instruct": "groq",
+  "groq-llama-4-scout-17b-16e-instruct": "groq",
+  "groq-llama-guard-4-12b": "groq",
+  "groq-llama-prompt-guard-2-22m": "groq",
+  "groq-llama-prompt-guard-2-86m": "groq",
+  "groq-llama-3.3-70b-versatile": "groq",
+  "groq-llama-3.1-8b-instant": "groq",
+  "groq-kimi-k2-instruct": "groq",
+  "groq-kimi-k2-instruct-0905": "groq",
+  "groq-gpt-oss-safeguard-20b": "groq",
+  "groq-gpt-oss-120b": "groq",
+  "groq-gpt-oss-20b": "groq",
+  "groq-qwen3-32b": "groq",
 };
 
 const FREE_OPENROUTER_MODELS = [
@@ -543,31 +574,45 @@ export function getModelFamilyForRequest(req: Request): ModelFamily {
 }
 
 export function getGroqModelFamily(model: string): GroqModelFamily {
-  // Map Groq model IDs to model families based on pricing tiers
-  if (model.includes("llama-3.1-8b") || model === "llama-3.1-8b-instant") {
-    return "groq-llama-8b";
-  }
-  if (model.includes("llama-3.3-70b") || model === "llama-3.3-70b-versatile") {
-    return "groq-llama-70b";
-  }
-  if (model.includes("llama-4-17b") || model.includes("llama-4-maverick") || model.includes("llama-4-scout")) {
-    return "groq-llama-4-17b";
-  }
-  if (model.includes("gpt-oss-120b") || model === "openai/gpt-oss-120b") {
-    return "groq-gpt-oss-120b";
-  }
-  if (model.includes("gpt-oss-20b") || model === "openai/gpt-oss-20b") {
-    return "groq-gpt-oss-20b";
-  }
-  if (model.includes("kimi-k2") || model.includes("kimi-k2-instruct") || model === "moonshotai/kimi-k2-instruct-0905") {
-    return "groq-kimi";
-  }
-  if (model.includes("qwen3-32b") || model === "qwen/qwen3-32b") {
-    return "groq-qwen-32b";
-  }
+  const modelLower = model.toLowerCase();
 
-  // Default to most common/cheapest model for unknown models
-  return "groq-llama-8b";
+  // Map exact model IDs to model families
+  if (modelLower === "allam-2-7b") return "groq-allam-2-7b";
+  if (modelLower === "groq/compound") return "groq-compound";
+  if (modelLower === "groq/compound-mini") return "groq-compound-mini";
+  if (modelLower === "meta-llama/llama-4-maverick-17b-128e-instruct") return "groq-llama-4-maverick-17b-128e-instruct";
+  if (modelLower === "meta-llama/llama-4-scout-17b-16e-instruct") return "groq-llama-4-scout-17b-16e-instruct";
+  if (modelLower === "meta-llama/llama-guard-4-12b") return "groq-llama-guard-4-12b";
+  if (modelLower === "meta-llama/llama-prompt-guard-2-22m") return "groq-llama-prompt-guard-2-22m";
+  if (modelLower === "meta-llama/llama-prompt-guard-2-86m") return "groq-llama-prompt-guard-2-86m";
+  if (modelLower === "llama-3.3-70b-versatile") return "groq-llama-3.3-70b-versatile";
+  if (modelLower === "llama-3.1-8b-instant") return "groq-llama-3.1-8b-instant";
+  if (modelLower === "moonshotai/kimi-k2-instruct") return "groq-kimi-k2-instruct";
+  if (modelLower === "moonshotai/kimi-k2-instruct-0905") return "groq-kimi-k2-instruct-0905";
+  if (modelLower === "openai/gpt-oss-safeguard-20b") return "groq-gpt-oss-safeguard-20b";
+  if (modelLower === "openai/gpt-oss-120b") return "groq-gpt-oss-120b";
+  if (modelLower === "openai/gpt-oss-20b") return "groq-gpt-oss-20b";
+  if (modelLower === "qwen/qwen3-32b") return "groq-qwen3-32b";
+
+  // Pattern matching fallbacks
+  if (modelLower.includes("allam-2-7b")) return "groq-allam-2-7b";
+  if (modelLower.includes("compound") && !modelLower.includes("mini")) return "groq-compound";
+  if (modelLower.includes("compound-mini")) return "groq-compound-mini";
+  if (modelLower.includes("llama-4-maverick")) return "groq-llama-4-maverick-17b-128e-instruct";
+  if (modelLower.includes("llama-4-scout")) return "groq-llama-4-scout-17b-16e-instruct";
+  if (modelLower.includes("llama-guard-4")) return "groq-llama-guard-4-12b";
+  if (modelLower.includes("llama-prompt-guard-2-22m")) return "groq-llama-prompt-guard-2-22m";
+  if (modelLower.includes("llama-prompt-guard-2-86m")) return "groq-llama-prompt-guard-2-86m";
+  if (modelLower.includes("llama-3.3-70b")) return "groq-llama-3.3-70b-versatile";
+  if (modelLower.includes("llama-3.1-8b")) return "groq-llama-3.1-8b-instant";
+  if (modelLower.includes("kimi-k2-instruct")) return "groq-kimi-k2-instruct";
+  if (modelLower.includes("gpt-oss-safeguard")) return "groq-gpt-oss-safeguard-20b";
+  if (modelLower.includes("gpt-oss-120b")) return "groq-gpt-oss-120b";
+  if (modelLower.includes("gpt-oss-20b")) return "groq-gpt-oss-20b";
+  if (modelLower.includes("qwen3-32b")) return "groq-qwen3-32b";
+
+  // Default fallback
+  return "groq-llama-3.1-8b-instant";
 }
 
 function assertNever(x: never): never {
